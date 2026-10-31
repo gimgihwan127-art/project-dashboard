@@ -49,12 +49,12 @@
               "cat": "oev6x7xr4p",
               "owner": "이영광",
               "start": "2026-10-25",
-              "end": "2026-11-03",
+              "end": "2026-11-21",
               "status": "진행중",
               "progress": 10,
               "note": "",
               "updatedBy": "익명",
-              "updatedAt": "2026-10-31T13:43:03.683Z"
+              "updatedAt": "2026-10-31T13:43:12.163Z"
             },
             {
               "id": "0sfj4zxr4p",
@@ -269,6 +269,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:43:03.683Z",
+  "updatedAt": "2026-10-31T13:43:12.163Z",
   "updatedBy": "익명"
 }
