@@ -44,6 +44,11 @@ let gh = Object.assign(
   { owner: '', repo: '', branch: 'main', path: 'data.json', token: '', auto: false, sha: '', syncedAt: '' },
   JSON.parse(store.get(LS_GH) || '{}')
 );
+// GitHub Pages(<아이디>.github.io/<저장소>/)로 열면 저장소 정보를 자동으로 채움
+if (!gh.owner && location.hostname.endsWith('.github.io')) {
+  gh.owner = location.hostname.split('.')[0];
+  gh.repo = location.pathname.split('/').filter(Boolean)[0] || `${gh.owner}.github.io`;
+}
 let dirty = store.get(LS_DIRTY) === '1';
 let syncing = false;
 let autoTimer = null;
@@ -900,8 +905,12 @@ async function ghPush(fromAuto) {
 }
 
 // 다른 탭/앱에서 돌아왔을 때 변경사항이 없으면 최신 데이터 자동 반영
+// (토큰 없는 사용자는 시간당 60회 API 제한이 있어 1분에 한 번만 확인)
+let lastFocusPull = 0;
 window.addEventListener('focus', () => {
-  if (ghReady() && !dirty && !syncing) ghPull(true);
+  if (!ghReady() || dirty || syncing || Date.now() - lastFocusPull < 60000) return;
+  lastFocusPull = Date.now();
+  ghPull(true);
 });
 
 /* ---------------- 시작 ---------------- */
