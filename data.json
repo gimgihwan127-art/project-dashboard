@@ -5,7 +5,7 @@
   "projects": [
     {
       "id": "r6z6y0xr4p",
-      "name": "샘플 프로젝트",
+      "name": "2026 FDC 금융빌딩",
       "categories": [
         {
           "id": "oev6x7xr4p",
@@ -59,10 +59,10 @@
               "start": "2026-10-25",
               "end": "2026-11-03",
               "status": "대기",
-              "progress": 55,
+              "progress": 0,
               "note": "",
               "updatedBy": "익명",
-              "updatedAt": "2026-10-31T13:04:41.820Z"
+              "updatedAt": "2026-10-31T13:10:48.133Z"
             },
             {
               "id": "0sfj4zxr4p",
@@ -187,9 +187,11 @@
           "updatedBy": "김하나",
           "updatedAt": "2026-10-31T13:04:29.593Z"
         }
-      ]
+      ],
+      "updatedBy": "익명",
+      "updatedAt": "2026-10-31T13:10:43.808Z"
     }
   ],
-  "updatedAt": "2026-10-31T13:10:13.906Z",
+  "updatedAt": "2026-10-31T13:10:48.133Z",
   "updatedBy": "익명"
 }
