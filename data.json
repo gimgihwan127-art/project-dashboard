@@ -7,7 +7,7 @@
     "장소정",
     "FDC"
   ],
-  "activeId": "r6z6y0xr4p",
+  "activeId": "quti5wrb79",
   "projects": [
     {
       "id": "r6z6y0xr4p",
@@ -188,8 +188,46 @@
       ],
       "updatedBy": "익명",
       "updatedAt": "2026-10-31T13:10:43.808Z"
+    },
+    {
+      "id": "quti5wrb79",
+      "name": "11월 VVIP 세미나",
+      "categories": [
+        {
+          "id": "75dedrrb79",
+          "name": "교육",
+          "status": "",
+          "todos": []
+        },
+        {
+          "id": "etx5qgrb79",
+          "name": "영상",
+          "status": "",
+          "todos": []
+        },
+        {
+          "id": "3af1hurb79",
+          "name": "디자인",
+          "status": "",
+          "todos": []
+        },
+        {
+          "id": "470290rb79",
+          "name": "마케팅",
+          "status": "",
+          "todos": []
+        }
+      ],
+      "schedules": [
+        {
+          "id": "0o0mk0rb79",
+          "name": "메인 스케줄",
+          "rows": []
+        }
+      ],
+      "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:27:07.201Z",
+  "updatedAt": "2026-10-31T13:27:28.629Z",
   "updatedBy": "FDC"
 }
