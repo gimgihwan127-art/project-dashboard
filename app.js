@@ -195,12 +195,11 @@ function renderSummary() {
   const members = people(p).map((n) => {
     const tasks = rows.filter((r) => r.owner === n && r.status !== '완료').length;
     const reqs = p.requests.filter((q) => q.to === n && q.status !== '완료').length;
-    const removable = state.members.includes(n);
     return `<li class="${ui.reqPerson === n ? 'on' : ''}" data-act="filter-person" data-name="${esc(n)}" title="클릭하면 이 사람의 업무 요청만 봅니다">
       <span class="ava" style="background:${hashColor(n, AVA_COLORS)}">${esc(n[0])}</span>
       <span class="nm">${esc(n)}</span>
       <span class="st">업무 ${tasks} · 요청 ${reqs}</span>
-      ${removable ? `<button class="icon-del" data-act="delete-member" data-name="${esc(n)}" title="팀원 목록에서 제거">${ICON_DEL}</button>` : ''}
+      <button class="icon-del" data-act="delete-member" data-name="${esc(n)}" title="팀원 목록에서 제거">${ICON_DEL}</button>
     </li>`;
   }).join('');
 
@@ -680,13 +679,30 @@ document.addEventListener('click', (e) => {
       save(); renderRequests(); renderSummary();
       break;
     }
-    case 'delete-member':
+    case 'delete-member': {
       e.stopPropagation();
-      if (!confirm(`'${d.name}'님을 팀원 목록에서 제거할까요? (기존 업무 기록은 유지됩니다)`)) return;
+      // 업무·요청에 담당자로 남아 있으면 목록에 계속 보이므로 그 이름도 함께 비움
+      const used = state.projects.reduce((a, x) => a
+        + allRows(x).filter((r) => r.owner === d.name).length
+        + x.categories.reduce((b, c) => b + c.todos.filter((o) => o.owner === d.name).length, 0)
+        + x.requests.filter((q) => q.from === d.name || q.to === d.name).length, 0);
+      const msg = used
+        ? `'${d.name}'님을 팀원 목록에서 제거할까요?\n담당자·요청자로 지정된 ${used}곳의 이름도 비워집니다. (업무 내용은 유지)`
+        : `'${d.name}'님을 팀원 목록에서 제거할까요?`;
+      if (!confirm(msg)) return;
       state.members = state.members.filter((n) => n !== d.name);
+      state.projects.forEach((x) => {
+        allRows(x).forEach((r) => { if (r.owner === d.name) r.owner = ''; });
+        x.categories.forEach((c) => c.todos.forEach((o) => { if (o.owner === d.name) o.owner = ''; }));
+        x.requests.forEach((q) => {
+          if (q.from === d.name) q.from = '';
+          if (q.to === d.name) q.to = '';
+        });
+      });
       if (ui.reqPerson === d.name) ui.reqPerson = '';
-      save(); renderSummary(); renderRequests(); renderMemberList();
+      save(); renderAll();
       break;
+    }
     case 'filter-person':
       ui.reqPerson = ui.reqPerson === d.name ? '' : d.name;
       renderRequests(); renderSummary();
