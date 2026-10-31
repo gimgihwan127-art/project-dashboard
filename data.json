@@ -1,11 +1,6 @@
 {
   "version": 1,
-  "members": [
-    "김하나",
-    "이두리",
-    "박세나",
-    "최네모"
-  ],
+  "members": [],
   "activeId": "r6z6y0xr4p",
   "projects": [
     {
@@ -195,6 +190,6 @@
       ]
     }
   ],
-  "updatedAt": "2026-10-31T13:10:00.561Z",
+  "updatedAt": "2026-10-31T13:10:13.906Z",
   "updatedBy": "익명"
 }
