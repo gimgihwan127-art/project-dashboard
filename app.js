@@ -62,6 +62,7 @@ function newProject(name) {
   return {
     id: uid(),
     name,
+    members: user ? [user] : [],
     categories: ['교육', '영상', '디자인', '마케팅'].map((n) => ({ id: uid(), name: n, status: '', todos: [] })),
     schedules: [{ id: uid(), name: '메인 스케줄', rows: [] }],
     requests: [],
@@ -87,13 +88,17 @@ function sampleState() {
     { id: uid(), type: '요청', from: '최네모', to: '박세나', title: 'SNS용 배너 3종 요청', body: '1080x1080, 1080x1920 사이즈로 부탁드립니다.', due: addDays(3), status: '요청됨', answer: '', createdAt: now(), updatedBy: '최네모', updatedAt: now() },
     { id: uid(), type: '질문', from: '이두리', to: '김하나', title: '교육 영상 분량 문의', body: '편당 몇 분 정도로 생각하시나요?', due: '', status: '확인중', answer: '10분 내외로 부탁드려요.', createdAt: now(), updatedBy: '김하나', updatedAt: now() },
   ];
-  return { version: 1, members: ['김하나', '이두리', '박세나', '최네모'], activeId: p.id, projects: [p], updatedAt: now(), updatedBy: '' };
+  p.members = ['김하나', '이두리', '박세나', '최네모'];
+  return { version: 2, activeId: p.id, projects: [p], updatedAt: now(), updatedBy: '' };
 }
 
 function normalize(s) {
   if (!s || !Array.isArray(s.projects) || !s.projects.length) return null;
-  s.members = Array.isArray(s.members) ? s.members : [];
+  // 예전 버전의 전체 공통 팀원 목록은 각 프로젝트로 복사
+  const legacy = Array.isArray(s.members) ? s.members : [];
+  delete s.members;
   s.projects.forEach((p) => {
+    p.members = Array.isArray(p.members) ? p.members : [...legacy];
     p.categories = p.categories || [];
     p.schedules = p.schedules?.length ? p.schedules : [{ id: uid(), name: '메인 스케줄', rows: [] }];
     p.schedules.forEach((sc) => (sc.rows = sc.rows || []));
@@ -111,7 +116,7 @@ const catColor = (p, catId) => {
   return i < 0 ? '#c4c9cf' : CAT_COLORS[i % CAT_COLORS.length];
 };
 const people = (p) => [...new Set([
-  ...state.members,
+  ...p.members,
   ...allRows(p).map((r) => r.owner),
   ...p.requests.flatMap((q) => [q.from, q.to]),
 ].map((n) => (n || '').trim()).filter(Boolean))];
@@ -220,7 +225,7 @@ function renderSummary() {
       <div class="bars">${bars || '<p class="empty">카테고리가 없습니다</p>'}</div>
     </div>
     <div class="card members">
-      <div class="sec-head"><h3>팀원</h3><span class="pill-dark">${people(p).length}명</span></div>
+      <div class="sec-head"><h3>프로젝트 팀원</h3><span class="pill-dark">${people(p).length}명</span></div>
       <ul>${members || '<p class="empty">팀원을 추가하세요</p>'}</ul>
       <form class="add-inline" data-form="member">
         <input name="name" placeholder="팀원 이름 추가" autocomplete="off">
@@ -500,7 +505,8 @@ document.addEventListener('input', (e) => {
 document.addEventListener('change', (e) => {
   const el = e.target;
   if (el.id === 'meInput') {
-    if (user && !state.members.includes(user)) { state.members.push(user); save(); }
+    const p = project();
+    if (user && !p.members.includes(user)) { p.members.push(user); save(); }
     renderSummary(); renderRequests(); renderMemberList();
     return;
   }
@@ -566,7 +572,7 @@ document.addEventListener('submit', (e) => {
   if (form.dataset.form === 'member') {
     const n = (f.name || '').trim();
     if (!n) return;
-    if (!state.members.includes(n)) state.members.push(n);
+    if (!p.members.includes(n)) p.members.push(n);
     save();
     renderSummary(); renderRequests(); renderMemberList();
     $('#summary .add-inline input').focus();
@@ -681,23 +687,20 @@ document.addEventListener('click', (e) => {
     }
     case 'delete-member': {
       e.stopPropagation();
-      // 업무·요청에 담당자로 남아 있으면 목록에 계속 보이므로 그 이름도 함께 비움
-      const used = state.projects.reduce((a, x) => a
-        + allRows(x).filter((r) => r.owner === d.name).length
-        + x.categories.reduce((b, c) => b + c.todos.filter((o) => o.owner === d.name).length, 0)
-        + x.requests.filter((q) => q.from === d.name || q.to === d.name).length, 0);
+      // 업무·요청에 담당자로 남아 있으면 목록에 계속 보이므로 이 프로젝트 안의 그 이름도 함께 비움
+      const used = allRows(p).filter((r) => r.owner === d.name).length
+        + p.categories.reduce((b, c) => b + c.todos.filter((o) => o.owner === d.name).length, 0)
+        + p.requests.filter((q) => q.from === d.name || q.to === d.name).length;
       const msg = used
-        ? `'${d.name}'님을 팀원 목록에서 제거할까요?\n담당자·요청자로 지정된 ${used}곳의 이름도 비워집니다. (업무 내용은 유지)`
-        : `'${d.name}'님을 팀원 목록에서 제거할까요?`;
+        ? `'${d.name}'님을 이 프로젝트 팀원에서 제거할까요?\n담당자·요청자로 지정된 ${used}곳의 이름도 비워집니다. (업무 내용은 유지)`
+        : `'${d.name}'님을 이 프로젝트 팀원에서 제거할까요?`;
       if (!confirm(msg)) return;
-      state.members = state.members.filter((n) => n !== d.name);
-      state.projects.forEach((x) => {
-        allRows(x).forEach((r) => { if (r.owner === d.name) r.owner = ''; });
-        x.categories.forEach((c) => c.todos.forEach((o) => { if (o.owner === d.name) o.owner = ''; }));
-        x.requests.forEach((q) => {
-          if (q.from === d.name) q.from = '';
-          if (q.to === d.name) q.to = '';
-        });
+      p.members = p.members.filter((n) => n !== d.name);
+      allRows(p).forEach((r) => { if (r.owner === d.name) r.owner = ''; });
+      p.categories.forEach((c) => c.todos.forEach((o) => { if (o.owner === d.name) o.owner = ''; }));
+      p.requests.forEach((q) => {
+        if (q.from === d.name) q.from = '';
+        if (q.to === d.name) q.to = '';
       });
       if (ui.reqPerson === d.name) ui.reqPerson = '';
       save(); renderAll();
