@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "activeId": "tftcys0vos",
+  "activeId": "70huyg25ii",
   "projects": [
     {
       "id": "r6z6y0xr4p",
@@ -224,7 +224,9 @@
       "name": "12월 토요특강",
       "members": [
         "이영광",
-        "김준연"
+        "김준연",
+        "송지민",
+        "김한새"
       ],
       "categories": [
         {
@@ -260,8 +262,49 @@
         }
       ],
       "requests": []
+    },
+    {
+      "id": "70huyg25ii",
+      "name": "본업부자들 SNL",
+      "members": [
+        "FDC"
+      ],
+      "categories": [
+        {
+          "id": "kamffq25ii",
+          "name": "교육",
+          "status": "",
+          "todos": []
+        },
+        {
+          "id": "zf05gx25ii",
+          "name": "영상",
+          "status": "",
+          "todos": []
+        },
+        {
+          "id": "4iykju25ii",
+          "name": "디자인",
+          "status": "",
+          "todos": []
+        },
+        {
+          "id": "35kgcg25ii",
+          "name": "마케팅",
+          "status": "",
+          "todos": []
+        }
+      ],
+      "schedules": [
+        {
+          "id": "5zx4iq25ii",
+          "name": "메인 스케줄",
+          "rows": []
+        }
+      ],
+      "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:35:10.041Z",
+  "updatedAt": "2026-10-31T13:35:54.474Z",
   "updatedBy": "FDC"
 }
