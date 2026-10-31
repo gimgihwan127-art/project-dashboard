@@ -36,7 +36,7 @@
             {
               "id": "7vhf2hxr4p",
               "text": "채널별 예산 확정",
-              "owner": "최네모",
+              "owner": "",
               "done": false
             }
           ]
@@ -51,7 +51,7 @@
               "id": "5zql85xr4p",
               "task": "신입 교육 커리큘럼 기획",
               "cat": "oev6x7xr4p",
-              "owner": "김하나",
+              "owner": "",
               "start": "2026-10-25",
               "end": "2026-11-03",
               "status": "대기",
@@ -64,7 +64,7 @@
               "id": "0sfj4zxr4p",
               "task": "교육 자료 제작",
               "cat": "oev6x7xr4p",
-              "owner": "김하나",
+              "owner": "",
               "start": "2026-11-02",
               "end": "2026-11-09",
               "status": "대기",
@@ -77,7 +77,7 @@
               "id": "haha4cxr4p",
               "task": "브랜드 소개 영상 촬영",
               "cat": "346epvxr4p",
-              "owner": "이두리",
+              "owner": "",
               "start": "2026-10-28",
               "end": "2026-11-04",
               "status": "진행중",
@@ -90,7 +90,7 @@
               "id": "mcnywkxr4p",
               "task": "영상 편집 및 자막",
               "cat": "346epvxr4p",
-              "owner": "이두리",
+              "owner": "",
               "start": "2026-11-05",
               "end": "2026-11-12",
               "status": "대기",
@@ -103,7 +103,7 @@
               "id": "9fp1clxr4p",
               "task": "키비주얼 디자인",
               "cat": "6zfn9yxr4p",
-              "owner": "박세나",
+              "owner": "",
               "start": "2026-10-23",
               "end": "2026-10-30",
               "status": "진행중",
@@ -116,7 +116,7 @@
               "id": "5kjm3zxr4p",
               "task": "상세페이지 디자인",
               "cat": "6zfn9yxr4p",
-              "owner": "박세나",
+              "owner": "",
               "start": "2026-10-31",
               "end": "2026-11-07",
               "status": "진행중",
@@ -129,7 +129,7 @@
               "id": "wtzc7txr4p",
               "task": "SNS 런칭 캠페인",
               "cat": "0rvaowxr4p",
-              "owner": "최네모",
+              "owner": "",
               "start": "2026-11-04",
               "end": "2026-11-14",
               "status": "대기",
@@ -158,15 +158,15 @@
         {
           "id": "97ykioxr4p",
           "type": "요청",
-          "from": "최네모",
-          "to": "박세나",
+          "from": "",
+          "to": "",
           "title": "SNS용 배너 3종 요청",
           "body": "1080x1080, 1080x1920 사이즈로 부탁드립니다.",
           "due": "2026-11-03",
           "status": "요청됨",
           "answer": "",
           "createdAt": "2026-10-31T13:04:29.593Z",
-          "updatedBy": "최네모",
+          "updatedBy": "",
           "updatedAt": "2026-10-31T13:04:29.593Z"
         }
       ],
@@ -174,6 +174,6 @@
       "updatedAt": "2026-10-31T13:10:43.808Z"
     }
   ],
-  "updatedAt": "2026-10-31T13:11:39.270Z",
+  "updatedAt": "2026-10-31T13:13:33.432346Z",
   "updatedBy": "익명"
 }
