@@ -51,7 +51,7 @@
           "rows": [
             {
               "id": "5zql85xr4p",
-              "task": "ㅁ",
+              "task": "모객 현황 취합",
               "cat": "oev6x7xr4p",
               "owner": "이영광",
               "start": "2026-10-25",
@@ -60,7 +60,7 @@
               "progress": 0,
               "note": "",
               "updatedBy": "FDC",
-              "updatedAt": "2026-10-31T13:30:54.330Z"
+              "updatedAt": "2026-10-31T13:30:59.186Z"
             },
             {
               "id": "0sfj4zxr4p",
@@ -214,6 +214,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:30:54.330Z",
+  "updatedAt": "2026-10-31T13:30:59.186Z",
   "updatedBy": "FDC"
 }
