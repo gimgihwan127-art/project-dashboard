@@ -58,16 +58,16 @@
             },
             {
               "id": "0sfj4zxr4p",
-              "task": "여",
+              "task": "행사 준비",
               "cat": "",
-              "owner": "이영광",
+              "owner": "김기환",
               "start": "2026-11-02",
               "end": "2026-11-09",
               "status": "대기",
               "progress": 0,
               "note": "",
               "updatedBy": "익명",
-              "updatedAt": "2026-10-31T13:44:41.767Z"
+              "updatedAt": "2026-10-31T13:44:49.191Z"
             },
             {
               "id": "haha4cxr4p",
@@ -269,6 +269,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:44:41.767Z",
+  "updatedAt": "2026-10-31T13:44:49.191Z",
   "updatedBy": "익명"
 }
