@@ -146,6 +146,19 @@
               "note": "",
               "updatedBy": "",
               "updatedAt": "2026-10-31T13:04:29.593Z"
+            },
+            {
+              "id": "7dvt4h4ui9",
+              "task": "",
+              "cat": "oev6x7xr4p",
+              "owner": "",
+              "start": "2026-10-31",
+              "end": "2026-11-07",
+              "status": "대기",
+              "progress": 0,
+              "note": "",
+              "updatedBy": "익명",
+              "updatedAt": "2026-10-31T13:10:00.561Z"
             }
           ]
         }
@@ -182,6 +195,6 @@
       ]
     }
   ],
-  "updatedAt": "2026-10-31T13:04:41.820Z",
+  "updatedAt": "2026-10-31T13:10:00.561Z",
   "updatedBy": "익명"
 }
