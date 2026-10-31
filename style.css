@@ -259,6 +259,17 @@ select.cell { cursor: pointer; }
 .track .today { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--red); opacity: .7; }
 .meta-cell { font-size: 12px; color: #50545a; white-space: nowrap; }
 .meta-cell small { display: block; color: var(--muted); font-size: 11px; }
+/* 삭제 열은 표를 옆으로 밀어도 항상 오른쪽에 보이게 고정 */
+th.del-col, td.del-col {
+  position: sticky; right: 0; z-index: 1; width: 44px; text-align: center;
+  background: var(--card); box-shadow: -8px 0 12px -10px rgba(0,0,0,.25);
+}
+tbody tr:hover td.del-col { background: #fafbfb; }
+.row-del {
+  border: 0; background: var(--soft); color: #7a8088; width: 32px; height: 32px; border-radius: 50%;
+  display: inline-grid; place-items: center;
+}
+.row-del:hover { background: var(--red); color: #fff; }
 .empty { color: var(--muted); font-size: 13px; padding: 18px 4px; text-align: center; }
 
 /* ---------- categories ---------- */
