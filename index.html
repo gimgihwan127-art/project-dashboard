@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project Board</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="5" width="14" height="14" rx="2"/><circle cx="5" cy="5" r="2" fill="#fff"/><circle cx="19" cy="5" r="2" fill="#fff"/><circle cx="5" cy="19" r="2" fill="#fff"/><circle cx="19" cy="19" r="2" fill="#fff"/></svg>
+        </div>
+        <span>Project Board</span>
+      </div>
+      <nav class="tabs" id="tabs" aria-label="프로젝트"></nav>
+      <div class="top-actions">
+        <button class="sync-btn off" id="syncBtn" data-act="gh-open" title="GitHub 동기화 설정">
+          <span class="sync-dot"></span><span id="syncLabel">로컬 저장</span>
+        </button>
+        <label class="me" title="내 이름 (수정 기록에 표시됩니다)">
+          <input id="meInput" placeholder="내 이름 입력" autocomplete="off">
+          <span class="avatar" id="meAvatar">?</span>
+        </label>
+      </div>
+    </header>
+
+    <section class="overview">
+      <div>
+        <p class="eyebrow">Overview</p>
+        <input class="title-input" id="projTitle" data-t="proj" data-k="name" placeholder="프로젝트 이름" autocomplete="off">
+      </div>
+      <div class="tools">
+        <button class="round-btn" data-act="gh-pull" title="GitHub에서 불러오기">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        </button>
+        <button class="round-btn" data-act="gh-push" title="GitHub에 저장 (Ctrl+S)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9M7 14l5-5 5 5M5 3h14"/></svg>
+        </button>
+        <button class="round-btn" data-act="export" title="JSON 파일로 내보내기">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 18v-6M9 15l3 3 3-3"/></svg>
+        </button>
+        <button class="round-btn" data-act="import" title="JSON 파일 가져오기">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6M9 15l3-3 3 3"/></svg>
+        </button>
+        <button class="round-btn" data-act="gh-open" title="설정">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        </button>
+        <button class="round-btn danger" data-act="delete-project" title="현재 프로젝트 삭제">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <div class="chips">
+      <button class="chip active" data-act="scroll" data-target="top">전체</button>
+      <button class="chip" data-act="scroll" data-target="schedules">스케줄표</button>
+      <button class="chip" data-act="scroll" data-target="categories">카테고리 현황</button>
+      <button class="chip" data-act="scroll" data-target="requests">업무 요청</button>
+    </div>
+
+    <section class="grid-top" id="summary" data-section="summary"></section>
+    <section id="schedules" data-section="schedules"></section>
+    <section id="categories" data-section="categories"></section>
+    <section id="requests" data-section="requests"></section>
+
+    <footer class="foot" id="foot"></footer>
+  </div>
+
+  <datalist id="memberList"></datalist>
+  <input type="file" id="importFile" accept="application/json,.json" hidden>
+
+  <dialog id="ghDialog">
+    <form method="dialog" class="gh-form">
+      <h3>GitHub 동기화</h3>
+      <p class="hint">데이터를 GitHub 저장소의 JSON 파일에 저장해 팀원과 공유합니다. 공개 저장소라면 <b>불러오기</b>는 토큰 없이 가능하고, <b>저장</b>하려면 토큰이 필요합니다.</p>
+      <div class="gh-grid">
+        <label>소유자 (아이디)<input id="gh-owner" placeholder="예: my-github-id" autocomplete="off"></label>
+        <label>저장소 이름<input id="gh-repo" placeholder="예: project-dashboard" autocomplete="off"></label>
+        <label>브랜치<input id="gh-branch" placeholder="main" autocomplete="off"></label>
+        <label>데이터 파일 경로<input id="gh-path" placeholder="data.json" autocomplete="off"></label>
+      </div>
+      <label>개인 액세스 토큰 (이 브라우저에만 저장됨)<input id="gh-token" type="password" placeholder="github_pat_..." autocomplete="off"></label>
+      <label class="check"><input type="checkbox" id="gh-auto"> 변경 후 자동으로 GitHub에 저장</label>
+      <p class="hint" id="gh-status"></p>
+      <div class="gh-actions">
+        <button type="button" class="btn-light" data-act="gh-close">닫기</button>
+        <button type="button" class="btn-light" data-act="gh-pull">불러오기</button>
+        <button type="button" class="btn-dark" data-act="gh-save">설정 저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
