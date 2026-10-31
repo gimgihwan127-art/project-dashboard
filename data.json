@@ -48,13 +48,13 @@
               "task": "모객 현황 취합",
               "cat": "oev6x7xr4p",
               "owner": "이영광",
-              "start": "2026-10-25",
+              "start": "2026-10-24",
               "end": "2026-11-21",
               "status": "진행중",
               "progress": 10,
               "note": "",
               "updatedBy": "익명",
-              "updatedAt": "2026-10-31T13:43:12.163Z"
+              "updatedAt": "2026-10-31T13:43:22.414Z"
             },
             {
               "id": "0sfj4zxr4p",
@@ -269,6 +269,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:43:12.163Z",
+  "updatedAt": "2026-10-31T13:43:22.414Z",
   "updatedBy": "익명"
 }
