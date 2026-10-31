@@ -62,12 +62,12 @@
               "cat": "",
               "owner": "김기환",
               "start": "2026-11-02",
-              "end": "2026-11-09",
-              "status": "대기",
-              "progress": 0,
+              "end": "2026-11-13",
+              "status": "진행중",
+              "progress": 10,
               "note": "",
               "updatedBy": "익명",
-              "updatedAt": "2026-10-31T13:44:49.191Z"
+              "updatedAt": "2026-10-31T13:45:12.307Z"
             },
             {
               "id": "haha4cxr4p",
@@ -269,6 +269,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:44:49.191Z",
+  "updatedAt": "2026-10-31T13:45:12.307Z",
   "updatedBy": "익명"
 }
