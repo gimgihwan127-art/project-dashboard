@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "activeId": "quti5wrb79",
+  "activeId": "tftcys0vos",
   "projects": [
     {
       "id": "r6z6y0xr4p",
@@ -218,8 +218,49 @@
         "김한새",
         "김준연"
       ]
+    },
+    {
+      "id": "tftcys0vos",
+      "name": "12월 토요특강",
+      "members": [
+        "FDC"
+      ],
+      "categories": [
+        {
+          "id": "pvb16i0vos",
+          "name": "교육",
+          "status": "",
+          "todos": []
+        },
+        {
+          "id": "xx27x50vos",
+          "name": "영상",
+          "status": "",
+          "todos": []
+        },
+        {
+          "id": "mxbpd10vos",
+          "name": "디자인",
+          "status": "",
+          "todos": []
+        },
+        {
+          "id": "mzisvv0vos",
+          "name": "마케팅",
+          "status": "",
+          "todos": []
+        }
+      ],
+      "schedules": [
+        {
+          "id": "g1yywd0vos",
+          "name": "메인 스케줄",
+          "rows": []
+        }
+      ],
+      "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:34:26.964Z",
+  "updatedAt": "2026-10-31T13:34:55.084Z",
   "updatedBy": "FDC"
 }
