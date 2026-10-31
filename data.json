@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "members": [
+    "김하나",
+    "이두리",
+    "박세나",
+    "최네모"
+  ],
+  "activeId": "r6z6y0xr4p",
+  "projects": [
+    {
+      "id": "r6z6y0xr4p",
+      "name": "샘플 프로젝트",
+      "categories": [
+        {
+          "id": "oev6x7xr4p",
+          "name": "교육",
+          "status": "커리큘럼 초안 완료, 내부 검토 중",
+          "todos": [
+            {
+              "id": "h1xhb4xr4p",
+              "text": "강사 섭외",
+              "owner": "김하나",
+              "done": false
+            }
+          ]
+        },
+        {
+          "id": "346epvxr4p",
+          "name": "영상",
+          "status": "",
+          "todos": []
+        },
+        {
+          "id": "6zfn9yxr4p",
+          "name": "디자인",
+          "status": "",
+          "todos": []
+        },
+        {
+          "id": "0rvaowxr4p",
+          "name": "마케팅",
+          "status": "",
+          "todos": [
+            {
+              "id": "7vhf2hxr4p",
+              "text": "채널별 예산 확정",
+              "owner": "최네모",
+              "done": false
+            }
+          ]
+        }
+      ],
+      "schedules": [
+        {
+          "id": "2mjxrlxr4p",
+          "name": "메인 스케줄",
+          "rows": [
+            {
+              "id": "5zql85xr4p",
+              "task": "신입 교육 커리큘럼 기획",
+              "cat": "oev6x7xr4p",
+              "owner": "김하나",
+              "start": "2026-10-25",
+              "end": "2026-11-03",
+              "status": "대기",
+              "progress": 55,
+              "note": "",
+              "updatedBy": "익명",
+              "updatedAt": "2026-10-31T13:04:41.820Z"
+            },
+            {
+              "id": "0sfj4zxr4p",
+              "task": "교육 자료 제작",
+              "cat": "oev6x7xr4p",
+              "owner": "김하나",
+              "start": "2026-11-02",
+              "end": "2026-11-09",
+              "status": "대기",
+              "progress": 0,
+              "note": "",
+              "updatedBy": "",
+              "updatedAt": "2026-10-31T13:04:29.593Z"
+            },
+            {
+              "id": "haha4cxr4p",
+              "task": "브랜드 소개 영상 촬영",
+              "cat": "346epvxr4p",
+              "owner": "이두리",
+              "start": "2026-10-28",
+              "end": "2026-11-04",
+              "status": "진행중",
+              "progress": 30,
+              "note": "",
+              "updatedBy": "",
+              "updatedAt": "2026-10-31T13:04:29.593Z"
+            },
+            {
+              "id": "mcnywkxr4p",
+              "task": "영상 편집 및 자막",
+              "cat": "346epvxr4p",
+              "owner": "이두리",
+              "start": "2026-11-05",
+              "end": "2026-11-12",
+              "status": "대기",
+              "progress": 0,
+              "note": "",
+              "updatedBy": "",
+              "updatedAt": "2026-10-31T13:04:29.593Z"
+            },
+            {
+              "id": "9fp1clxr4p",
+              "task": "키비주얼 디자인",
+              "cat": "6zfn9yxr4p",
+              "owner": "박세나",
+              "start": "2026-10-23",
+              "end": "2026-10-30",
+              "status": "완료",
+              "progress": 100,
+              "note": "",
+              "updatedBy": "",
+              "updatedAt": "2026-10-31T13:04:29.593Z"
+            },
+            {
+              "id": "5kjm3zxr4p",
+              "task": "상세페이지 디자인",
+              "cat": "6zfn9yxr4p",
+              "owner": "박세나",
+              "start": "2026-10-31",
+              "end": "2026-11-07",
+              "status": "진행중",
+              "progress": 20,
+              "note": "",
+              "updatedBy": "",
+              "updatedAt": "2026-10-31T13:04:29.593Z"
+            },
+            {
+              "id": "wtzc7txr4p",
+              "task": "SNS 런칭 캠페인",
+              "cat": "0rvaowxr4p",
+              "owner": "최네모",
+              "start": "2026-11-04",
+              "end": "2026-11-14",
+              "status": "대기",
+              "progress": 0,
+              "note": "",
+              "updatedBy": "",
+              "updatedAt": "2026-10-31T13:04:29.593Z"
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "id": "97ykioxr4p",
+          "type": "요청",
+          "from": "최네모",
+          "to": "박세나",
+          "title": "SNS용 배너 3종 요청",
+          "body": "1080x1080, 1080x1920 사이즈로 부탁드립니다.",
+          "due": "2026-11-03",
+          "status": "요청됨",
+          "answer": "",
+          "createdAt": "2026-10-31T13:04:29.593Z",
+          "updatedBy": "최네모",
+          "updatedAt": "2026-10-31T13:04:29.593Z"
+        },
+        {
+          "id": "4gomz4xr4p",
+          "type": "질문",
+          "from": "이두리",
+          "to": "김하나",
+          "title": "교육 영상 분량 문의",
+          "body": "편당 몇 분 정도로 생각하시나요?",
+          "due": "",
+          "status": "확인중",
+          "answer": "10분 내외로 부탁드려요.",
+          "createdAt": "2026-10-31T13:04:29.593Z",
+          "updatedBy": "김하나",
+          "updatedAt": "2026-10-31T13:04:29.593Z"
+        }
+      ]
+    }
+  ],
+  "updatedAt": "2026-10-31T13:04:41.820Z",
+  "updatedBy": "익명"
+}
