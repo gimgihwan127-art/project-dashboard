@@ -267,7 +267,10 @@
       "id": "70huyg25ii",
       "name": "본업부자들 SNL",
       "members": [
-        "최원정"
+        "최원정",
+        "김기환",
+        "유준희",
+        "장소정"
       ],
       "categories": [
         {
@@ -305,6 +308,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:35:59.633Z",
+  "updatedAt": "2026-10-31T13:36:09.745Z",
   "updatedBy": "FDC"
 }
