@@ -223,7 +223,8 @@
       "id": "tftcys0vos",
       "name": "12월 토요특강",
       "members": [
-        "이영광"
+        "이영광",
+        "김준연"
       ],
       "categories": [
         {
@@ -261,6 +262,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:35:03.722Z",
+  "updatedAt": "2026-10-31T13:35:10.041Z",
   "updatedBy": "FDC"
 }
