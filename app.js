@@ -266,7 +266,7 @@ function rowHTML(p, s, r, rg) {
     <td class="gantt-cell"><div class="track">${ganttInner(r, rg, color)}</div></td>
     <td><input class="cell" ${A('note')} value="${esc(r.note)}" placeholder="진행사항 / 메모"></td>
     <td class="meta-cell">${esc(r.updatedBy) || '-'}<small>${fmt(r.updatedAt)}</small></td>
-    <td><button class="icon-del" data-act="delete-row" data-s="${s.id}" data-r="${r.id}" title="행 삭제">${ICON_DEL}</button></td>
+    <td class="del-col"><button class="row-del" data-act="delete-row" data-s="${s.id}" data-r="${r.id}" title="이 업무 삭제">${ICON_TRASH}</button></td>
   </tr>`;
 }
 
@@ -295,7 +295,7 @@ function renderSchedules() {
         <div class="table-wrap"><table>
           <thead><tr>
             <th style="width:20%">업무명</th><th>카테고리</th><th>담당자</th><th>시작일</th><th>종료일</th><th>상태</th><th>진행률</th>
-            <th>타임라인 <span class="gantt-range">${rangeLabel(rg)}</span></th><th style="width:16%">메모</th><th>최종 수정</th><th></th>
+            <th>타임라인 <span class="gantt-range">${rangeLabel(rg)}</span></th><th style="width:16%">메모</th><th>최종 수정</th><th class="del-col">삭제</th>
           </tr></thead>
           <tbody>${s.rows.map((r) => rowHTML(p, s, r, rg)).join('')}</tbody>
         </table></div>
