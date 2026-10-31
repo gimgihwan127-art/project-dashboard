@@ -1,13 +1,7 @@
 {
   "version": 1,
-  "members": [
-    "유준희",
-    "이영광",
-    "김기환",
-    "장소정",
-    "FDC"
-  ],
-  "activeId": "quti5wrb79",
+  "members": [],
+  "activeId": "r6z6y0xr4p",
   "projects": [
     {
       "id": "r6z6y0xr4p",
@@ -228,6 +222,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:27:28.629Z",
+  "updatedAt": "2026-10-31T13:27:46.741Z",
   "updatedBy": "FDC"
 }
