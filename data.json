@@ -1,6 +1,11 @@
 {
   "version": 1,
-  "members": [],
+  "members": [
+    "장소정",
+    "김기환",
+    "유준희",
+    "이영광"
+  ],
   "activeId": "r6z6y0xr4p",
   "projects": [
     {
@@ -222,6 +227,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:27:46.741Z",
+  "updatedAt": "2026-10-31T13:30:15.773Z",
   "updatedBy": "FDC"
 }
