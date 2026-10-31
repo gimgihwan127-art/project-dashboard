@@ -1,6 +1,8 @@
 {
   "version": 1,
-  "members": [],
+  "members": [
+    "유준희"
+  ],
   "activeId": "r6z6y0xr4p",
   "projects": [
     {
@@ -192,6 +194,6 @@
       "updatedAt": "2026-10-31T13:10:43.808Z"
     }
   ],
-  "updatedAt": "2026-10-31T13:10:50.446Z",
+  "updatedAt": "2026-10-31T13:11:13.456Z",
   "updatedBy": "익명"
 }
