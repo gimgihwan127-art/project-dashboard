@@ -89,24 +89,24 @@
               "owner": "장소정",
               "start": "2026-10-23",
               "end": "2026-10-30",
-              "status": "대기",
-              "progress": 0,
+              "status": "진행중",
+              "progress": 35,
               "note": "",
               "updatedBy": "익명",
-              "updatedAt": "2026-10-31T13:42:45.340Z"
+              "updatedAt": "2026-10-31T13:45:20.962Z"
             },
             {
               "id": "wtzc7txr4p",
-              "task": "SNS 런칭 캠페인",
+              "task": "홍보 준비",
               "cat": "0rvaowxr4p",
-              "owner": "",
+              "owner": "김기환",
               "start": "2026-11-04",
               "end": "2026-11-14",
               "status": "대기",
               "progress": 0,
               "note": "",
-              "updatedBy": "",
-              "updatedAt": "2026-10-31T13:04:29.593Z"
+              "updatedBy": "익명",
+              "updatedAt": "2026-10-31T13:45:29.440Z"
             }
           ]
         }
@@ -269,6 +269,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:45:12.307Z",
+  "updatedAt": "2026-10-31T13:45:29.440Z",
   "updatedBy": "익명"
 }
