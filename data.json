@@ -50,11 +50,11 @@
               "owner": "이영광",
               "start": "2026-10-25",
               "end": "2026-11-03",
-              "status": "대기",
-              "progress": 0,
+              "status": "진행중",
+              "progress": 10,
               "note": "",
-              "updatedBy": "FDC",
-              "updatedAt": "2026-10-31T13:30:59.186Z"
+              "updatedBy": "익명",
+              "updatedAt": "2026-10-31T13:43:03.683Z"
             },
             {
               "id": "0sfj4zxr4p",
@@ -269,6 +269,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:42:58.093Z",
+  "updatedAt": "2026-10-31T13:43:03.683Z",
   "updatedBy": "익명"
 }
