@@ -58,16 +58,16 @@
             },
             {
               "id": "0sfj4zxr4p",
-              "task": "교육 자료 제작",
-              "cat": "oev6x7xr4p",
+              "task": "여",
+              "cat": "",
               "owner": "이영광",
               "start": "2026-11-02",
               "end": "2026-11-09",
               "status": "대기",
               "progress": 0,
               "note": "",
-              "updatedBy": "FDC",
-              "updatedAt": "2026-10-31T13:30:24.081Z"
+              "updatedBy": "익명",
+              "updatedAt": "2026-10-31T13:44:41.767Z"
             },
             {
               "id": "haha4cxr4p",
@@ -269,6 +269,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:43:22.414Z",
+  "updatedAt": "2026-10-31T13:44:41.767Z",
   "updatedBy": "익명"
 }
