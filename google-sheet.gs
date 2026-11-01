@@ -9,6 +9,7 @@
  * 여러 사람이 동시에 다른 요청(또는 같은 요청의 다른 칸)을 고쳐도 서로 덮어쓰지 않습니다.
  */
 
+const SPREADSHEET_ID = ''; // 시트 밖에서 만든 스크립트라면 시트 주소의 /d/와 /edit 사이 값을 넣음
 const SHEET_NAME = '업무요청';
 const COLS = [
   ['id', 'ID'], ['project', '프로젝트ID'], ['projectName', '프로젝트'], ['type', '유형'],
@@ -18,7 +19,7 @@ const COLS = [
 const KEYS = COLS.map((c) => c[0]);
 
 function sheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) sh = ss.insertSheet(SHEET_NAME);
   if (sh.getLastRow() === 0) {
@@ -89,4 +90,9 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+// 처음 한 번 실행해서 권한을 허용하고 시트 머리글을 만듭니다
+function setup() {
+  sheet_();
 }
