@@ -407,15 +407,15 @@
             {
               "id": "unr0ob9x3r",
               "task": "출석 체크 방식 결정",
-              "cat": "75dedrrb79",
-              "owner": "최원정",
+              "cat": "",
+              "owner": "김준연",
               "start": "2026-11-02",
               "end": "2026-11-06",
               "status": "대기",
               "progress": 0,
               "note": "QR(전화번호 수집) vs 대면",
-              "updatedBy": "익명",
-              "updatedAt": "2026-11-01T05:22:00.000Z"
+              "updatedBy": "김준연",
+              "updatedAt": "2026-11-01T05:26:05.700Z"
             },
             {
               "id": "ntb6a0u5r4",
@@ -718,6 +718,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T05:25:53.567Z",
+  "updatedAt": "2026-11-01T05:26:05.700Z",
   "updatedBy": "김준연"
 }
