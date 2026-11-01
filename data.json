@@ -185,9 +185,11 @@
             },
             {
               "id": "588fqisxm5",
-              "text": "[강사] 강사 카톡방 개설, 발표 10분 전 스탠바이 안내",
+              "text": "[강사] 강사 카톡방 개설",
               "owner": "최원정",
-              "done": false
+              "done": false,
+              "updatedBy": "김준연",
+              "updatedAt": "2026-11-01T05:29:32.001Z"
             },
             {
               "id": "y2swlvuvcp",
@@ -672,6 +674,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T05:29:24.249Z",
+  "updatedAt": "2026-11-01T05:29:32.001Z",
   "updatedBy": "김준연"
 }
