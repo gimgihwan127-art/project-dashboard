@@ -433,15 +433,15 @@
             {
               "id": "wj3kizlxvi",
               "task": "강의안 최종 수령",
-              "cat": "75dedrrb79",
-              "owner": "최원정",
+              "cat": "3af1hurb79",
+              "owner": "김한새",
               "start": "2026-11-13",
               "end": "2026-11-13",
               "status": "대기",
               "progress": 0,
               "note": "최소 13일",
-              "updatedBy": "익명",
-              "updatedAt": "2026-11-01T05:22:00.000Z"
+              "updatedBy": "김준연",
+              "updatedAt": "2026-11-01T05:26:26.267Z"
             },
             {
               "id": "guxhlsbcx6",
@@ -705,6 +705,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T05:26:14.114Z",
+  "updatedAt": "2026-11-01T05:26:26.267Z",
   "updatedBy": "김준연"
 }
