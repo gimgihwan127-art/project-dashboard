@@ -433,15 +433,15 @@
             {
               "id": "317tmvpmlf",
               "task": "강사 PPT 가안 전달·수령",
-              "cat": "75dedrrb79",
+              "cat": "3af1hurb79",
               "owner": "최원정",
               "start": "2026-11-02",
               "end": "2026-11-11",
               "status": "대기",
               "progress": 0,
               "note": "11일 수령 후 통일화",
-              "updatedBy": "익명",
-              "updatedAt": "2026-11-01T05:22:00.000Z"
+              "updatedBy": "김준연",
+              "updatedAt": "2026-11-01T05:25:43.276Z"
             },
             {
               "id": "wj3kizlxvi",
@@ -718,6 +718,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T05:25:21.401Z",
+  "updatedAt": "2026-11-01T05:25:43.276Z",
   "updatedBy": "김준연"
 }
