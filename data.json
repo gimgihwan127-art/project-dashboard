@@ -385,11 +385,11 @@
               "owner": "최원정",
               "start": "2026-11-09",
               "end": "2026-11-13",
-              "status": "대기",
-              "progress": 0,
+              "status": "진행중",
+              "progress": 10,
               "note": "적정 기준 추가 18명 (외부 13 + 내부 5)",
-              "updatedBy": "익명",
-              "updatedAt": "2026-11-01T05:22:00.000Z"
+              "updatedBy": "김준연",
+              "updatedAt": "2026-11-01T05:26:50.761Z"
             },
             {
               "id": "unr0ob9x3r",
@@ -692,6 +692,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T05:26:43.287Z",
+  "updatedAt": "2026-11-01T05:26:50.761Z",
   "updatedBy": "김준연"
 }
