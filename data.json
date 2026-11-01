@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "activeId": "r6z6y0xr4p",
+  "activeId": "quti5wrb79",
   "projects": [
     {
       "id": "r6z6y0xr4p",
@@ -143,42 +143,491 @@
         {
           "id": "75dedrrb79",
           "name": "교육",
-          "status": "",
-          "todos": []
+          "status": "모객 116명 (내부 예상 150명, 최대 188명). 대관·강사 준비 진행 중",
+          "todos": [
+            {
+              "id": "d9ascf5wdm",
+              "text": "[모객] 내부 모객 최종 추천안 작성 (이번 주)",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "atoo71taun",
+              "text": "[모객] 모객 최종 확정 (다음 주 중)",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "tlg6brmmau",
+              "text": "[모객] 노쇼 10% 반영 여부 결정 (노쇼 제외 산정 추천)",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "mybhab1ton",
+              "text": "[출석] 출석 체크 방식 결정 (QR + 전화번호 수집 vs 대면 출석)",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "w1a3obxgvz",
+              "text": "[대관] 당일 오퍼레이팅 업체 확정 (음원·스크린 조절, 조명은 우리 측)",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "8uopbwwmwq",
+              "text": "[대관] 의전 인원 산정",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "aey25s1hos",
+              "text": "[대관] 커피 브레이크 리필 타이밍·원형 테이블 위치 확정",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "3fbgtcq8ar",
+              "text": "[대관] 코트룸 운영 위치·방법 확정 (호텔 조율 중)",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "z2wbfw9bdv",
+              "text": "[대관] 옆 대관장 입장 시간 겹침 확인, 동선 혼란·통신 장애 대응책 마련",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "p4lb41e386",
+              "text": "[강사] 강사별 PPT 가안 전달, 11일까지 수령 후 통일화",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "6p27tdtteq",
+              "text": "[강사] 강의안 최종 수령 (13일)",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "588fqisxm5",
+              "text": "[강사] 강사 카톡방 개설, 발표 10분 전 스탠바이 안내",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "y2swlvuvcp",
+              "text": "[강사] 리허설 안내 (현장 진행 1시간 전 도착, 음원 타이밍·입퇴장)",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "pc85sbkahq",
+              "text": "[아나운서] 계약서 서명 (교육팀 전담)",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "hzdd7on1t4",
+              "text": "[아나운서] 1시간 30분 전 도착, 진행 리허설, 유의사항 전달",
+              "owner": "최원정",
+              "done": false
+            },
+            {
+              "id": "gqk93f3fv9",
+              "text": "[현장] 큐시트 초안 제작 (이번 주)",
+              "owner": "김준연",
+              "done": false
+            },
+            {
+              "id": "owohv4kqd0",
+              "text": "[현장] 대본 초안 아나운서 전달 (행사 7일 전)",
+              "owner": "김준연",
+              "done": false
+            },
+            {
+              "id": "ozk5q8b33l",
+              "text": "[현장] 운영 준비물 체크리스트 작성",
+              "owner": "김준연",
+              "done": false
+            }
+          ]
         },
         {
           "id": "etx5qgrb79",
           "name": "영상",
-          "status": "",
-          "todos": []
+          "status": "오프닝 영상 생략 여부 검토 중. 인터뷰·스케치 촬영 계획 수립 전",
+          "todos": [
+            {
+              "id": "533skn77mo",
+              "text": "오프닝 영상 제작 여부 결정 (기존 홍보영상 활용, 생략 고려)",
+              "owner": "송지민",
+              "done": false
+            },
+            {
+              "id": "b6th2dafa3",
+              "text": "인터뷰 위치 확정 (이전 VCC와 비교)",
+              "owner": "송지민",
+              "done": false
+            },
+            {
+              "id": "wo0ky30k6c",
+              "text": "사업단별 인터뷰 대상자 요청 (추후 활용 목적에 맞는 다양한 시도 고려)",
+              "owner": "송지민",
+              "done": false
+            },
+            {
+              "id": "3gu3pc3yrk",
+              "text": "스케치 촬영 타임테이블 제작",
+              "owner": "송지민",
+              "done": false
+            },
+            {
+              "id": "zqd638lv6x",
+              "text": "현장 영상 송출 준비",
+              "owner": "송지민",
+              "done": false
+            }
+          ]
         },
         {
           "id": "3af1hurb79",
           "name": "디자인",
-          "status": "",
-          "todos": []
+          "status": "현수막 최종 확정 필요. 리플렛은 이전 디자인 기준으로 제작 예정",
+          "todos": [
+            {
+              "id": "5sugv8tq6d",
+              "text": "현수막 최종 확정 (권장: 무대 프론트 2매 + 외부 천장 4매, 합계 금액 재확인)",
+              "owner": "김한새",
+              "done": false
+            },
+            {
+              "id": "rwbj2su598",
+              "text": "무대 백월 현수막 사이즈 실측·호텔 협의",
+              "owner": "김한새",
+              "done": false
+            },
+            {
+              "id": "q1czspxdn2",
+              "text": "입간판 수량 재산정 (이전 VCC 기준, 인포메이션 옆 1개)",
+              "owner": "김한새",
+              "done": false
+            },
+            {
+              "id": "0bkqcuvp1z",
+              "text": "리플렛 제작 (행사 7일 전 수령, 출력 3일 소요)",
+              "owner": "김한새",
+              "done": false
+            },
+            {
+              "id": "c7dcdo2cu0",
+              "text": "리플렛 설문 수정사항 수석님과 논의",
+              "owner": "김한새",
+              "done": false
+            },
+            {
+              "id": "wbud1aamdm",
+              "text": "안내물 제작 (자리 안내, 출석 체크, 출입 금지, 초상권, 외부 음료 반입 금지, 스태프 온리, 와이파이)",
+              "owner": "김한새",
+              "done": false
+            }
+          ]
         },
         {
           "id": "470290rb79",
           "name": "마케팅",
-          "status": "",
-          "todos": []
+          "status": "이벤터스 5명(10/30 기준), 온오프믹스 0명, 인플루언서 대상자 확인 중",
+          "todos": [
+            {
+              "id": "bkigo5jnau",
+              "text": "이벤터스: 이전 불참자 명단 정리 후 모객 (현재 5명, 목표 3명 재확인)",
+              "owner": "김준연",
+              "done": false
+            },
+            {
+              "id": "qvs0wgddrz",
+              "text": "이벤터스: 자산 규모·직책·참여 여부 확인",
+              "owner": "김준연",
+              "done": false
+            },
+            {
+              "id": "34rwf6r38h",
+              "text": "온오프믹스 모객 (현재 0명)",
+              "owner": "김준연",
+              "done": false
+            },
+            {
+              "id": "1dzt04mcfw",
+              "text": "인플루언서: 대상자 확인, 촬영 스케줄 확보, 명단 정리",
+              "owner": "김준연",
+              "done": false
+            },
+            {
+              "id": "a32kmx7vum",
+              "text": "인플루언서: 모객 진행 (수요일 시작)",
+              "owner": "김준연",
+              "done": false
+            }
+          ]
         }
       ],
       "schedules": [
         {
           "id": "0o0mk0rb79",
           "name": "메인 스케줄",
-          "rows": []
+          "rows": [
+            {
+              "id": "gedegwzjlu",
+              "task": "내부 모객 최종 추천안",
+              "cat": "75dedrrb79",
+              "owner": "최원정",
+              "start": "2026-11-02",
+              "end": "2026-11-06",
+              "status": "진행중",
+              "progress": 0,
+              "note": "현재 116명, 내부 예상 150명",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            },
+            {
+              "id": "sl025xmmvx",
+              "task": "모객 최종 확정",
+              "cat": "75dedrrb79",
+              "owner": "최원정",
+              "start": "2026-11-09",
+              "end": "2026-11-13",
+              "status": "대기",
+              "progress": 0,
+              "note": "적정 기준 추가 18명 (외부 13 + 내부 5)",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            },
+            {
+              "id": "unr0ob9x3r",
+              "task": "출석 체크 방식 결정",
+              "cat": "75dedrrb79",
+              "owner": "최원정",
+              "start": "2026-11-02",
+              "end": "2026-11-06",
+              "status": "대기",
+              "progress": 0,
+              "note": "QR(전화번호 수집) vs 대면",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            },
+            {
+              "id": "ntb6a0u5r4",
+              "task": "호텔 협의 (의전·커피 브레이크·코트룸)",
+              "cat": "75dedrrb79",
+              "owner": "최원정",
+              "start": "2026-11-02",
+              "end": "2026-11-13",
+              "status": "진행중",
+              "progress": 0,
+              "note": "옆 대관장 동선 겹침 확인 포함",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            },
+            {
+              "id": "317tmvpmlf",
+              "task": "강사 PPT 가안 전달·수령",
+              "cat": "75dedrrb79",
+              "owner": "최원정",
+              "start": "2026-11-02",
+              "end": "2026-11-11",
+              "status": "대기",
+              "progress": 0,
+              "note": "11일 수령 후 통일화",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            },
+            {
+              "id": "wj3kizlxvi",
+              "task": "강의안 최종 수령",
+              "cat": "75dedrrb79",
+              "owner": "최원정",
+              "start": "2026-11-13",
+              "end": "2026-11-13",
+              "status": "대기",
+              "progress": 0,
+              "note": "최소 13일",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            },
+            {
+              "id": "guxhlsbcx6",
+              "task": "현수막 최종 확정",
+              "cat": "3af1hurb79",
+              "owner": "김한새",
+              "start": "2026-11-02",
+              "end": "2026-11-06",
+              "status": "대기",
+              "progress": 0,
+              "note": "권장 설치 합계 금액 확인 필요, 백월 실측 포함",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            },
+            {
+              "id": "tuttymmurj",
+              "task": "리플렛 제작",
+              "cat": "3af1hurb79",
+              "owner": "김한새",
+              "start": "2026-11-09",
+              "end": "2026-11-12",
+              "status": "대기",
+              "progress": 0,
+              "note": "출력 3일 소요, 11/12 수령 목표",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            },
+            {
+              "id": "jq9v438pay",
+              "task": "이벤터스 모객",
+              "cat": "470290rb79",
+              "owner": "김준연",
+              "start": "2026-11-02",
+              "end": "2026-11-13",
+              "status": "진행중",
+              "progress": 0,
+              "note": "이전 불참자 제외, 10/30 기준 5명",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            },
+            {
+              "id": "uxrx6psgyv",
+              "task": "온오프믹스 모객",
+              "cat": "470290rb79",
+              "owner": "김준연",
+              "start": "2026-11-02",
+              "end": "2026-11-13",
+              "status": "대기",
+              "progress": 0,
+              "note": "현재 0명",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            },
+            {
+              "id": "77scrb3ziq",
+              "task": "인플루언서 대상자 확인·촬영 스케줄 확보",
+              "cat": "470290rb79",
+              "owner": "김준연",
+              "start": "2026-11-02",
+              "end": "2026-11-03",
+              "status": "진행중",
+              "progress": 0,
+              "note": "명단 정리",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            },
+            {
+              "id": "dos1temd41",
+              "task": "인플루언서 모객 진행",
+              "cat": "470290rb79",
+              "owner": "김준연",
+              "start": "2026-11-04",
+              "end": "2026-11-13",
+              "status": "대기",
+              "progress": 0,
+              "note": "수요일 시작",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            },
+            {
+              "id": "s3455v7rmm",
+              "task": "큐시트 초안 제작",
+              "cat": "",
+              "owner": "김준연",
+              "start": "2026-11-02",
+              "end": "2026-11-06",
+              "status": "대기",
+              "progress": 0,
+              "note": "",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            },
+            {
+              "id": "fj84xgvqr1",
+              "task": "대본 초안 아나운서 전달",
+              "cat": "",
+              "owner": "김준연",
+              "start": "2026-11-12",
+              "end": "2026-11-12",
+              "status": "대기",
+              "progress": 0,
+              "note": "행사 7일 전",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            },
+            {
+              "id": "lnthbyocjx",
+              "task": "행사 당일 (그랜드하얏트서울 그랜드 살롱 1F)",
+              "cat": "",
+              "owner": "김준연",
+              "start": "2026-11-19",
+              "end": "2026-11-19",
+              "status": "대기",
+              "progress": 0,
+              "note": "강사 1시간 전·아나운서 1시간 30분 전 도착, 발표 10분 전 스탠바이",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T05:22:00.000Z"
+            }
+          ]
         }
       ],
-      "requests": [],
+      "requests": [
+        {
+          "id": "9lak57kdku",
+          "type": "요청",
+          "from": "김준연",
+          "to": "송지민",
+          "title": "사업단별 인터뷰 대상자 요청",
+          "body": "사업단별 인터뷰 대상자를 요청드립니다. 이전 VCC와 위치를 비교해 확정할 예정입니다.",
+          "due": "2026-11-06",
+          "status": "요청됨",
+          "answer": "",
+          "createdAt": "2026-11-01T05:22:00.000Z",
+          "updatedBy": "",
+          "updatedAt": "2026-11-01T05:22:00.000Z"
+        },
+        {
+          "id": "bbob4ggloz",
+          "type": "요청",
+          "from": "김준연",
+          "to": "김한새",
+          "title": "리플렛 설문 수정사항 확인",
+          "body": "리플렛 설문 항목에 수정할 내용이 있는지 확인 부탁드립니다. 출력 3일 소요로 11/12 수령 목표입니다.",
+          "due": "2026-11-06",
+          "status": "요청됨",
+          "answer": "",
+          "createdAt": "2026-11-01T05:22:00.000Z",
+          "updatedBy": "",
+          "updatedAt": "2026-11-01T05:22:00.000Z"
+        },
+        {
+          "id": "ggc89xjujn",
+          "type": "요청",
+          "from": "김준연",
+          "to": "김한새",
+          "title": "현수막 최종 확정",
+          "body": "권장 설치안(무대 프론트 2매, 외부 천장 4매) 기준으로 최종 확정 부탁드립니다.",
+          "due": "2026-11-06",
+          "status": "요청됨",
+          "answer": "",
+          "createdAt": "2026-11-01T05:22:00.000Z",
+          "updatedBy": "",
+          "updatedAt": "2026-11-01T05:22:00.000Z"
+        }
+      ],
       "members": [
         "최원정",
         "송지민",
         "김한새",
         "김준연"
-      ]
+      ],
+      "updatedBy": "익명",
+      "updatedAt": "2026-11-01T05:22:00.000Z"
     },
     {
       "id": "tftcys0vos",
@@ -269,6 +718,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-10-31T13:45:29.440Z",
-  "updatedBy": "익명"
+  "updatedAt": "2026-11-01T05:25:21.401Z",
+  "updatedBy": "김준연"
 }
