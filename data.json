@@ -204,18 +204,6 @@
               "done": false
             },
             {
-              "id": "hzdd7on1t4",
-              "text": "[아나운서] 1시간 30분 전 도착, 진행 리허설, 유의사항 전달",
-              "owner": "최원정",
-              "done": false
-            },
-            {
-              "id": "gqk93f3fv9",
-              "text": "[현장] 큐시트 초안 제작 (이번 주)",
-              "owner": "김준연",
-              "done": false
-            },
-            {
               "id": "owohv4kqd0",
               "text": "[현장] 대본 초안 아나운서 전달 (행사 7일 전)",
               "owner": "김준연",
@@ -674,6 +662,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T05:29:32.001Z",
+  "updatedAt": "2026-11-01T05:29:42.178Z",
   "updatedBy": "김준연"
 }
