@@ -106,6 +106,7 @@ function normalize(s) {
     p.requests = p.requests || [];
   });
   if (!s.projects.some((p) => p.id === s.activeId)) s.activeId = s.projects[0].id;
+  s.sheetUrl = s.sheetUrl || '';
   return s;
 }
 
@@ -118,7 +119,7 @@ const catColor = (p, catId) => {
 const people = (p) => [...new Set([
   ...p.members,
   ...allRows(p).map((r) => r.owner),
-  ...p.requests.flatMap((q) => [q.from, q.to]),
+  ...reqsOf(p).flatMap((q) => [q.from, q.to]),
 ].map((n) => (n || '').trim()).filter(Boolean))];
 
 function stamp(o) {
@@ -189,7 +190,7 @@ function renderSummary() {
   const done = rows.filter((r) => r.status === '완료').length;
   const doing = rows.filter((r) => r.status === '진행중').length;
   const avg = total ? Math.round(rows.reduce((a, r) => a + (Number(r.progress) || 0), 0) / total) : 0;
-  const openReq = p.requests.filter((q) => q.status !== '완료').length;
+  const openReq = reqsOf(p).filter((q) => q.status !== '완료').length;
 
   const bars = p.categories.map((c, i) => {
     const cr = rows.filter((r) => r.cat === c.id);
@@ -199,7 +200,7 @@ function renderSummary() {
 
   const members = people(p).map((n) => {
     const tasks = rows.filter((r) => r.owner === n && r.status !== '완료').length;
-    const reqs = p.requests.filter((q) => q.to === n && q.status !== '완료').length;
+    const reqs = reqsOf(p).filter((q) => q.to === n && q.status !== '완료').length;
     return `<li class="${ui.reqPerson === n ? 'on' : ''}" data-act="filter-person" data-name="${esc(n)}" title="클릭하면 이 사람의 업무 요청만 봅니다">
       <span class="ava" style="background:${hashColor(n, AVA_COLORS)}">${esc(n[0])}</span>
       <span class="nm">${esc(n)}</span>
@@ -404,18 +405,26 @@ function reqCard(q) {
 
 function renderRequests() {
   const p = project();
-  const list = p.requests.filter((q) => !ui.reqPerson || q.to === ui.reqPerson || q.from === ui.reqPerson);
+  const all = reqsOf(p);
+  const list = all.filter((q) => !ui.reqPerson || q.to === ui.reqPerson || q.from === ui.reqPerson);
   const names = people(p);
+  sheet.stale = false;
+  const link = sheetOn()
+    ? `<span class="sheet-state ${sheet.error ? 'err' : ''}">${sheet.error ? `구글 시트 연결 오류 · ${esc(sheet.error)}`
+        : !sheet.loaded ? '구글 시트 불러오는 중…' : `구글 시트 연동 · ${sheet.saving ? '저장 중…' : `${fmt(sheet.at)} 갱신`}`}</span>
+       <button class="btn-outline" data-act="sheet-reload">새로고침</button>`
+    : '<button class="btn-outline" data-act="gh-open">구글 시트 연결</button>';
   $('#requests').innerHTML = `
     <div class="section-title">
       <div><h2>업무 요청 · 질문</h2><p>팀원 개개인에게 요청하거나 질문하고, 답변과 처리 상태를 기록합니다.</p></div>
+      <div class="sheet-bar">${link}</div>
     </div>
     <div class="card">
       <div class="sec-head">
         <div class="person-chips">
-          <button class="chip ${!ui.reqPerson ? 'active' : ''}" data-act="filter-person" data-name="">전체 ${p.requests.length}</button>
+          <button class="chip ${!ui.reqPerson ? 'active' : ''}" data-act="filter-person" data-name="">전체 ${all.length}</button>
           ${names.map((n) => {
-            const cnt = p.requests.filter((q) => q.to === n && q.status !== '완료').length;
+            const cnt = all.filter((q) => q.to === n && q.status !== '완료').length;
             return `<button class="chip ${ui.reqPerson === n ? 'active' : ''}" data-act="filter-person" data-name="${esc(n)}">${esc(n)}${cnt ? ' · ' + cnt : ''}</button>`;
           }).join('')}
         </div>
@@ -477,7 +486,7 @@ function targetOf(el) {
     case 'row': return p.schedules.find((s) => s.id === d.s)?.rows.find((r) => r.id === d.r);
     case 'cat': return p.categories.find((c) => c.id === d.c);
     case 'todo': return p.categories.find((c) => c.id === d.c)?.todos.find((o) => o.id === d.o);
-    case 'req': return p.requests.find((q) => q.id === d.q);
+    case 'req': return reqsOf(p).find((q) => q.id === d.q);
     default: return null;
   }
 }
@@ -499,7 +508,8 @@ document.addEventListener('input', (e) => {
   if (el.type === 'range') el.nextElementSibling.textContent = `${el.value}%`;
   if (el.dataset.t === 'proj') renderTabs();
   stamp(o);
-  save();
+  if (el.dataset.t === 'req' && sheetOn()) sheetPatch(o, el.dataset.k);
+  else save();
 });
 
 document.addEventListener('change', (e) => {
@@ -544,7 +554,8 @@ document.addEventListener('change', (e) => {
   if (t === 'todo' && k === 'done') el.closest('li').classList.toggle('done', o.done);
 
   stamp(o);
-  save();
+  if (t === 'req' && sheetOn()) sheetPatch(o, k);
+  else save();
   if (t === 'row') updateScheduleInPlace(el.dataset.s, el.dataset.r);
   refreshExcept(el.closest('[data-section]')?.dataset.section);
   if (t === 'req' && ['status', 'type', 'to', 'from', 'due'].includes(k)) renderRequests();
@@ -584,8 +595,14 @@ document.addEventListener('submit', (e) => {
       due: f.due, status: '요청됨', answer: '', createdAt: now(),
     };
     stamp(q);
-    p.requests.push(q);
-    save();
+    if (sheetOn()) {
+      Object.assign(q, { project: p.id, projectName: p.name });
+      sheet.items.push(q);
+      sheetSend([{ op: 'create', item: q }]);
+    } else {
+      p.requests.push(q);
+      save();
+    }
     renderRequests(); renderSummary(); renderMemberList();
     toast(`${q.to}님에게 ${q.type}이 등록되었습니다`);
   }
@@ -679,10 +696,17 @@ document.addEventListener('click', (e) => {
       break;
     }
     case 'delete-req': {
-      const q = p.requests.find((x) => x.id === d.q);
+      const q = reqsOf(p).find((x) => x.id === d.q);
       if (!confirm(`'${q.title}' 요청을 삭제할까요?`)) return;
-      p.requests = p.requests.filter((x) => x.id !== d.q);
-      save(); renderRequests(); renderSummary();
+      if (sheetOn()) {
+        sheet.items = sheet.items.filter((x) => x.id !== d.q);
+        delete sheet.pending[d.q];
+        sheetSend([{ op: 'delete', id: d.q }]);
+      } else {
+        p.requests = p.requests.filter((x) => x.id !== d.q);
+        save();
+      }
+      renderRequests(); renderSummary();
       break;
     }
     case 'delete-member': {
@@ -690,7 +714,7 @@ document.addEventListener('click', (e) => {
       // 업무·요청에 담당자로 남아 있으면 목록에 계속 보이므로 이 프로젝트 안의 그 이름도 함께 비움
       const used = allRows(p).filter((r) => r.owner === d.name).length
         + p.categories.reduce((b, c) => b + c.todos.filter((o) => o.owner === d.name).length, 0)
-        + p.requests.filter((q) => q.from === d.name || q.to === d.name).length;
+        + reqsOf(p).filter((q) => q.from === d.name || q.to === d.name).length;
       const msg = used
         ? `'${d.name}'님을 이 프로젝트 팀원에서 제거할까요?\n담당자·요청자로 지정된 ${used}곳의 이름도 비워집니다. (업무 내용은 유지)`
         : `'${d.name}'님을 이 프로젝트 팀원에서 제거할까요?`;
@@ -698,9 +722,10 @@ document.addEventListener('click', (e) => {
       p.members = p.members.filter((n) => n !== d.name);
       allRows(p).forEach((r) => { if (r.owner === d.name) r.owner = ''; });
       p.categories.forEach((c) => c.todos.forEach((o) => { if (o.owner === d.name) o.owner = ''; }));
-      p.requests.forEach((q) => {
-        if (q.from === d.name) q.from = '';
-        if (q.to === d.name) q.to = '';
+      reqsOf(p).forEach((q) => {
+        const ks = ['from', 'to'].filter((k) => q[k] === d.name);
+        ks.forEach((k) => (q[k] = ''));
+        if (ks.length && sheetOn()) { stamp(q); ks.forEach((k) => sheetPatch(q, k)); }
       });
       if (ui.reqPerson === d.name) ui.reqPerson = '';
       save(); renderAll();
@@ -727,6 +752,7 @@ document.addEventListener('click', (e) => {
       ghPull(false);
       break;
     case 'gh-push': ghPush(false); break;
+    case 'sheet-reload': sheetFlush(); sheetLoad(false); break;
   }
 });
 
@@ -781,6 +807,7 @@ function openGh() {
   $('#gh-path').value = gh.path;
   $('#gh-token').value = gh.token;
   $('#gh-auto').checked = gh.auto;
+  $('#sheet-url').value = state.sheetUrl;
   $('#gh-status').textContent = gh.syncedAt ? `마지막 동기화: ${fmt(gh.syncedAt)}` : '아직 동기화한 적 없음';
   $('#ghDialog').showModal();
 }
@@ -796,6 +823,13 @@ function readGhForm() {
   if (prev !== `${gh.owner}/${gh.repo}/${gh.branch}/${gh.path}`) gh.sha = '';
   saveGh();
   setSync();
+  const url = $('#sheet-url').value.trim();
+  if (url !== state.sheetUrl) {
+    if (url && !/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) return toast('구글 시트 주소는 https://script.google.com/…/exec 형식이어야 합니다', true);
+    state.sheetUrl = url;
+    save();
+    sheetReset();
+  }
 }
 
 function saveGhForm() {
@@ -858,7 +892,9 @@ async function ghPull(silent) {
     const s = normalize(r.data);
     if (!s) throw new Error('데이터 형식이 올바르지 않습니다');
     const keep = state?.activeId;
+    const prevSheet = state?.sheetUrl;
     state = s;
+    if (prevSheet !== state.sheetUrl) sheetReset();
     if (keep && state.projects.some((p) => p.id === keep)) state.activeId = keep;
     gh.sha = r.sha;
     gh.syncedAt = now();
@@ -932,6 +968,128 @@ window.addEventListener('focus', () => {
   ghPull(true);
 });
 
+/* ---------------- 구글 시트 (업무 요청·질문) ----------------
+ * 요청 하나 = 시트 한 줄. 수정은 바뀐 칸만 보내므로 동시에 고쳐도 서로 덮어쓰지 않음 */
+
+const sheet = { items: [], loaded: false, loading: false, saving: false, error: '', at: '', pending: {}, retry: [], timer: null, queue: Promise.resolve(), stale: false, asked: false };
+function sheetOn() { return !!state?.sheetUrl; }
+function reqsOf(p) { return sheetOn() ? sheet.items.filter((q) => q.project === p.id) : p.requests; }
+
+function sheetReset() {
+  Object.assign(sheet, { items: [], loaded: false, error: '', pending: {}, retry: [], asked: false });
+  renderRequests(); renderSummary(); renderMemberList();
+  sheetLoad(true);
+}
+
+function sheetPatch(q, k) {
+  const f = (sheet.pending[q.id] ||= {});
+  f[k] = q[k];
+  f.updatedBy = q.updatedBy;
+  f.updatedAt = q.updatedAt;
+  f.projectName = state.projects.find((p) => p.id === q.project)?.name || q.projectName || '';
+  clearTimeout(sheet.timer);
+  sheet.timer = setTimeout(sheetFlush, 800);
+}
+
+function sheetFlush() {
+  clearTimeout(sheet.timer);
+  const ops = [...sheet.retry, ...Object.entries(sheet.pending).map(([id, fields]) => ({ op: 'patch', id, fields }))];
+  sheet.retry = [];
+  sheet.pending = {};
+  if (ops.length) sheetSend(ops);
+}
+
+function sheetSend(ops) {
+  sheet.queue = sheet.queue.then(async () => {
+    sheet.saving = true;
+    renderSheetState();
+    try {
+      const j = await sheetFetch({ method: 'POST', body: JSON.stringify({ ops }) });
+      sheet.error = '';
+      applySheet(j.items);
+    } catch (err) {
+      sheet.retry.push(...ops); // 다음 저장·새로고침 때 다시 시도
+      sheet.error = err.message;
+      toast(`구글 시트 저장 실패 (잠시 후 다시 시도합니다): ${err.message}`, true);
+    } finally {
+      sheet.saving = false;
+      renderSheetState();
+    }
+  });
+  return sheet.queue;
+}
+
+async function sheetFetch(opt) {
+  // Content-Type을 지정하지 않아야(text/plain) 브라우저 사전 요청 없이 Apps Script로 전송됨
+  const res = await fetch(opt?.method === 'POST' ? state.sheetUrl : `${state.sheetUrl}?_=${Date.now()}`, opt);
+  if (!res.ok) throw new Error(`${res.status}`);
+  let j;
+  try { j = await res.json(); } catch { throw new Error('응답 형식 오류 (웹 앱 액세스 권한을 "모든 사용자"로 배포했는지 확인)'); }
+  if (!j.ok) throw new Error(j.error || '알 수 없는 오류');
+  return j;
+}
+
+async function sheetLoad(silent) {
+  if (!sheetOn() || sheet.loading) return;
+  sheet.loading = true;
+  try {
+    if (sheet.retry.length || Object.keys(sheet.pending).length) sheetFlush();
+    await sheet.queue;
+    const j = await sheetFetch();
+    sheet.error = '';
+    applySheet(j.items);
+    if (!silent) toast('구글 시트에서 최신 요청을 불러왔습니다');
+    migrateToSheet();
+  } catch (err) {
+    sheet.error = err.message;
+    if (!silent) toast(`구글 시트 불러오기 실패: ${err.message}`, true);
+    renderRequests();
+  } finally {
+    sheet.loading = false;
+  }
+}
+
+function applySheet(items) {
+  // 아직 보내지 않은 내 수정·추가는 유지
+  items.forEach((q) => sheet.pending[q.id] && Object.assign(q, sheet.pending[q.id]));
+  sheet.retry.filter((op) => op.op === 'create' && !items.some((q) => q.id === op.item.id)).forEach((op) => items.push(op.item));
+  const removed = new Set(sheet.retry.filter((op) => op.op === 'delete').map((op) => op.id));
+  sheet.items = items.filter((q) => !removed.has(q.id));
+  sheet.loaded = true;
+  sheet.at = now();
+  if (document.activeElement?.closest('#requests')) sheet.stale = true; // 입력 중에는 화면을 다시 그리지 않음
+  else renderRequests();
+  renderSummary(); renderMemberList();
+}
+
+function renderSheetState() {
+  if (sheet.stale || document.activeElement?.closest('#requests')) return;
+  renderRequests();
+}
+
+// 예전에 대시보드 안에 저장된 요청이 있으면 한 번 시트로 옮길지 물어봄
+function migrateToSheet() {
+  if (sheet.asked) return;
+  sheet.asked = true;
+  const ids = new Set(sheet.items.map((q) => q.id));
+  const old = state.projects.flatMap((p) => p.requests.filter((q) => !ids.has(q.id)).map((q) => ({ ...q, project: p.id, projectName: p.name })));
+  if (!old.length || !confirm(`대시보드에 저장된 기존 업무 요청·질문 ${old.length}건을 구글 시트로 옮길까요?`)) return;
+  sheet.items.push(...old);
+  sheetSend(old.map((item) => ({ op: 'create', item }))).then(() => {
+    if (sheet.retry.length) return;
+    state.projects.forEach((p) => (p.requests = []));
+    save();
+    toast(`${old.length}건을 구글 시트로 옮겼습니다`);
+  });
+  renderRequests(); renderSummary();
+}
+
+document.addEventListener('focusout', () => setTimeout(() => {
+  if (sheet.stale && !document.activeElement?.closest('#requests')) renderRequests();
+}, 0));
+setInterval(() => { if (!document.hidden) sheetLoad(true); }, 20000);
+window.addEventListener('focus', () => sheetLoad(true));
+
 /* ---------------- 시작 ---------------- */
 
 async function init() {
@@ -949,6 +1107,7 @@ async function init() {
   }
   if (!state) state = sampleState();
   renderAll();
+  sheetLoad(true);
   if (ghReady()) {
     if (dirty) toast('GitHub에 아직 올리지 않은 변경사항이 있습니다');
     else ghPull(true);
