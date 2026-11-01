@@ -357,17 +357,9 @@ dialog::backdrop { background: rgba(20,22,25,.45); backdrop-filter: blur(3px); }
 .gh-form { padding: 26px; display: flex; flex-direction: column; gap: 12px; }
 .gh-form h3 { font-size: 20px; }
 .gh-form label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #50545a; }
-.gh-form label.check { flex-direction: row; align-items: center; font-size: 13px; color: var(--ink); }
-.gh-form input:not([type=checkbox]) { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; outline: 0; background: var(--soft); }
+.gh-form input { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; outline: 0; background: var(--soft); }
 .gh-form input:focus { border-color: var(--green); background: #fff; }
-.gh-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .hint { font-size: 12px; color: var(--muted); line-height: 1.6; }
-.sub-h { font-size: 15px; margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--line, #e6e8eb); }
-.sheet-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.sheet-state { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
-.sheet-state::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
-.sheet-state.err { color: var(--red); }
-.sheet-state.err::before { background: var(--red); }
 .gh-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
 
 .toast {
@@ -400,6 +392,5 @@ dialog::backdrop { background: rgba(20,22,25,.45); backdrop-filter: blur(3px); }
   .hero .big { font-size: 42px; }
   .req-form { grid-template-columns: 1fr 1fr; }
   .brand span { display: none; }
-  .gh-grid { grid-template-columns: 1fr; }
   .sync-btn #syncLabel { display: none; }
 }
