@@ -1,9 +1,13 @@
-/* Project Board — 로컬 저장(localStorage) + GitHub 저장소 동기화 */
+/* Project Board — 구글 시트에 저장 (브라우저에는 빠른 표시용 사본만 보관) */
 
-const LS_STATE = 'pb_state_v1';
+// 팀이 함께 쓰는 구글 시트 웹 앱 주소 (설정에서 바꿀 수 있음)
+const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyOJIHJqleBo7xqfG7bNRIqR51W_PCz6pHzAPP5gETUClMraZlgiRIp5mt9QSZn7aSO/exec';
+const LS_STATE = 'pb_state_v2';
+const LS_BASE = 'pb_base_v2';
+const LS_LEGACY = 'pb_state_v1';
 const LS_USER = 'pb_user';
-const LS_GH = 'pb_github';
-const LS_DIRTY = 'pb_dirty';
+const LS_SHEET = 'pb_sheet';
+const LS_ACTIVE = 'pb_active';
 
 const STATUS = ['대기', '진행중', '완료', '보류'];
 const REQ_STATUS = ['요청됨', '확인중', '완료'];
@@ -40,18 +44,7 @@ const store = {
 
 let state;
 let user = store.get(LS_USER) || '';
-let gh = Object.assign(
-  { owner: '', repo: '', branch: 'main', path: 'data.json', token: '', auto: false, sha: '', syncedAt: '' },
-  JSON.parse(store.get(LS_GH) || '{}')
-);
-// GitHub Pages(<아이디>.github.io/<저장소>/)로 열면 저장소 정보를 자동으로 채움
-if (!gh.owner && location.hostname.endsWith('.github.io')) {
-  gh.owner = location.hostname.split('.')[0];
-  gh.repo = location.pathname.split('/').filter(Boolean)[0] || `${gh.owner}.github.io`;
-}
-let dirty = store.get(LS_DIRTY) === '1';
-let syncing = false;
-let autoTimer = null;
+let sheetUrl = store.get(LS_SHEET) || DEFAULT_SHEET_URL;
 const ui = { reqPerson: '' };
 
 function newRow(task, cat, owner, start, end, status = '대기', progress = 0) {
@@ -106,7 +99,7 @@ function normalize(s) {
     p.requests = p.requests || [];
   });
   if (!s.projects.some((p) => p.id === s.activeId)) s.activeId = s.projects[0].id;
-  s.sheetUrl = s.sheetUrl || '';
+  delete s.sheetUrl;
   return s;
 }
 
@@ -119,7 +112,7 @@ const catColor = (p, catId) => {
 const people = (p) => [...new Set([
   ...p.members,
   ...allRows(p).map((r) => r.owner),
-  ...reqsOf(p).flatMap((q) => [q.from, q.to]),
+  ...p.requests.flatMap((q) => [q.from, q.to]),
 ].map((n) => (n || '').trim()).filter(Boolean))];
 
 function stamp(o) {
@@ -127,21 +120,13 @@ function stamp(o) {
   o.updatedAt = now();
 }
 
+// 바뀐 내용은 0.8초 뒤 구글 시트로 (바뀐 칸만) 전송
 function save() {
   state.updatedAt = now();
   state.updatedBy = user || '익명';
-  store.set(LS_STATE, JSON.stringify(state));
-  setDirty(true);
-  renderFoot();
-  if (gh.auto && gh.token && ghReady()) {
-    clearTimeout(autoTimer);
-    autoTimer = setTimeout(() => ghPush(true), 4000);
-  }
-}
-
-function setDirty(v) {
-  dirty = v;
-  store.set(LS_DIRTY, v ? '1' : '0');
+  keepLocal();
+  clearTimeout(sync.timer);
+  sync.timer = setTimeout(flush, 800);
   setSync();
 }
 
@@ -190,7 +175,7 @@ function renderSummary() {
   const done = rows.filter((r) => r.status === '완료').length;
   const doing = rows.filter((r) => r.status === '진행중').length;
   const avg = total ? Math.round(rows.reduce((a, r) => a + (Number(r.progress) || 0), 0) / total) : 0;
-  const openReq = reqsOf(p).filter((q) => q.status !== '완료').length;
+  const openReq = p.requests.filter((q) => q.status !== '완료').length;
 
   const bars = p.categories.map((c, i) => {
     const cr = rows.filter((r) => r.cat === c.id);
@@ -200,7 +185,7 @@ function renderSummary() {
 
   const members = people(p).map((n) => {
     const tasks = rows.filter((r) => r.owner === n && r.status !== '완료').length;
-    const reqs = reqsOf(p).filter((q) => q.to === n && q.status !== '완료').length;
+    const reqs = p.requests.filter((q) => q.to === n && q.status !== '완료').length;
     return `<li class="${ui.reqPerson === n ? 'on' : ''}" data-act="filter-person" data-name="${esc(n)}" title="클릭하면 이 사람의 업무 요청만 봅니다">
       <span class="ava" style="background:${hashColor(n, AVA_COLORS)}">${esc(n[0])}</span>
       <span class="nm">${esc(n)}</span>
@@ -405,19 +390,12 @@ function reqCard(q) {
 
 function renderRequests() {
   const p = project();
-  const all = reqsOf(p);
+  const all = p.requests;
   const list = all.filter((q) => !ui.reqPerson || q.to === ui.reqPerson || q.from === ui.reqPerson);
   const names = people(p);
-  sheet.stale = false;
-  const link = sheetOn()
-    ? `<span class="sheet-state ${sheet.error ? 'err' : ''}">${sheet.error ? `구글 시트 연결 오류 · ${esc(sheet.error)}`
-        : !sheet.loaded ? '구글 시트 불러오는 중…' : `구글 시트 연동 · ${sheet.saving ? '저장 중…' : `${fmt(sheet.at)} 갱신`}`}</span>
-       <button class="btn-outline" data-act="sheet-reload">새로고침</button>`
-    : '<button class="btn-outline" data-act="gh-open">구글 시트 연결</button>';
   $('#requests').innerHTML = `
     <div class="section-title">
       <div><h2>업무 요청 · 질문</h2><p>팀원 개개인에게 요청하거나 질문하고, 답변과 처리 상태를 기록합니다.</p></div>
-      <div class="sheet-bar">${link}</div>
     </div>
     <div class="card">
       <div class="sec-head">
@@ -449,21 +427,20 @@ function renderRequests() {
 }
 
 function renderFoot() {
-  $('#foot').textContent = `마지막 수정: ${state.updatedBy || '-'} · ${fmt(state.updatedAt)}${gh.syncedAt ? ` · GitHub 동기화: ${fmt(gh.syncedAt)}` : ''}`;
+  $('#foot').textContent = sync.at ? `구글 시트와 동기화: ${fmt(sync.at)} · 20초마다 자동 갱신` : '구글 시트에 연결하는 중…';
 }
 
-function setSync(mode) {
-  const btn = $('#syncBtn');
-  const label = $('#syncLabel');
-  let cls = 'off';
-  let text = '로컬 저장';
-  if (mode === 'loading') { cls = 'loading'; text = '동기화 중…'; }
-  else if (ghReady()) {
-    cls = dirty ? 'dirty' : 'ok';
-    text = dirty ? '업로드 필요' : '동기화됨';
-  }
-  btn.className = `sync-btn ${cls}`;
-  label.textContent = text;
+function setSync() {
+  if (!state) return;
+  let cls = 'ok';
+  let text = '동기화됨';
+  if (sync.error) { cls = 'dirty'; text = '연결 오류'; }
+  else if (sync.busy || !sync.loaded) { cls = 'loading'; text = sync.loaded ? '저장 중…' : '불러오는 중…'; }
+  else if (sync.timer || pendingOps().length) { cls = 'dirty'; text = '저장 대기'; }
+  $('#syncBtn').className = `sync-btn ${cls}`;
+  $('#syncBtn').title = sync.error ? `구글 시트 오류: ${sync.error}` : '구글 시트 연결 설정';
+  $('#syncLabel').textContent = text;
+  renderFoot();
 }
 
 let toastTimer;
@@ -486,7 +463,7 @@ function targetOf(el) {
     case 'row': return p.schedules.find((s) => s.id === d.s)?.rows.find((r) => r.id === d.r);
     case 'cat': return p.categories.find((c) => c.id === d.c);
     case 'todo': return p.categories.find((c) => c.id === d.c)?.todos.find((o) => o.id === d.o);
-    case 'req': return reqsOf(p).find((q) => q.id === d.q);
+    case 'req': return p.requests.find((q) => q.id === d.q);
     default: return null;
   }
 }
@@ -508,8 +485,7 @@ document.addEventListener('input', (e) => {
   if (el.type === 'range') el.nextElementSibling.textContent = `${el.value}%`;
   if (el.dataset.t === 'proj') renderTabs();
   stamp(o);
-  if (el.dataset.t === 'req' && sheetOn()) sheetPatch(o, el.dataset.k);
-  else save();
+  save();
 });
 
 document.addEventListener('change', (e) => {
@@ -554,8 +530,7 @@ document.addEventListener('change', (e) => {
   if (t === 'todo' && k === 'done') el.closest('li').classList.toggle('done', o.done);
 
   stamp(o);
-  if (t === 'req' && sheetOn()) sheetPatch(o, k);
-  else save();
+  save();
   if (t === 'row') updateScheduleInPlace(el.dataset.s, el.dataset.r);
   refreshExcept(el.closest('[data-section]')?.dataset.section);
   if (t === 'req' && ['status', 'type', 'to', 'from', 'due'].includes(k)) renderRequests();
@@ -595,14 +570,8 @@ document.addEventListener('submit', (e) => {
       due: f.due, status: '요청됨', answer: '', createdAt: now(),
     };
     stamp(q);
-    if (sheetOn()) {
-      Object.assign(q, { project: p.id, projectName: p.name });
-      sheet.items.push(q);
-      sheetSend([{ op: 'create', item: q }]);
-    } else {
-      p.requests.push(q);
-      save();
-    }
+    p.requests.push(q);
+    save();
     renderRequests(); renderSummary(); renderMemberList();
     toast(`${q.to}님에게 ${q.type}이 등록되었습니다`);
   }
@@ -617,7 +586,7 @@ document.addEventListener('click', (e) => {
     case 'select-project':
       state.activeId = d.id;
       ui.reqPerson = '';
-      store.set(LS_STATE, JSON.stringify(state));
+      store.set(LS_ACTIVE, d.id);
       renderAll();
       break;
     case 'add-project': {
@@ -696,16 +665,10 @@ document.addEventListener('click', (e) => {
       break;
     }
     case 'delete-req': {
-      const q = reqsOf(p).find((x) => x.id === d.q);
+      const q = p.requests.find((x) => x.id === d.q);
       if (!confirm(`'${q.title}' 요청을 삭제할까요?`)) return;
-      if (sheetOn()) {
-        sheet.items = sheet.items.filter((x) => x.id !== d.q);
-        delete sheet.pending[d.q];
-        sheetSend([{ op: 'delete', id: d.q }]);
-      } else {
-        p.requests = p.requests.filter((x) => x.id !== d.q);
-        save();
-      }
+      p.requests = p.requests.filter((x) => x.id !== d.q);
+      save();
       renderRequests(); renderSummary();
       break;
     }
@@ -714,7 +677,7 @@ document.addEventListener('click', (e) => {
       // 업무·요청에 담당자로 남아 있으면 목록에 계속 보이므로 이 프로젝트 안의 그 이름도 함께 비움
       const used = allRows(p).filter((r) => r.owner === d.name).length
         + p.categories.reduce((b, c) => b + c.todos.filter((o) => o.owner === d.name).length, 0)
-        + reqsOf(p).filter((q) => q.from === d.name || q.to === d.name).length;
+        + p.requests.filter((q) => q.from === d.name || q.to === d.name).length;
       const msg = used
         ? `'${d.name}'님을 이 프로젝트 팀원에서 제거할까요?\n담당자·요청자로 지정된 ${used}곳의 이름도 비워집니다. (업무 내용은 유지)`
         : `'${d.name}'님을 이 프로젝트 팀원에서 제거할까요?`;
@@ -722,11 +685,7 @@ document.addEventListener('click', (e) => {
       p.members = p.members.filter((n) => n !== d.name);
       allRows(p).forEach((r) => { if (r.owner === d.name) r.owner = ''; });
       p.categories.forEach((c) => c.todos.forEach((o) => { if (o.owner === d.name) o.owner = ''; }));
-      reqsOf(p).forEach((q) => {
-        const ks = ['from', 'to'].filter((k) => q[k] === d.name);
-        ks.forEach((k) => (q[k] = ''));
-        if (ks.length && sheetOn()) { stamp(q); ks.forEach((k) => sheetPatch(q, k)); }
-      });
+      p.requests.forEach((q) => ['from', 'to'].forEach((k) => { if (q[k] === d.name) { q[k] = ''; stamp(q); } }));
       if (ui.reqPerson === d.name) ui.reqPerson = '';
       save(); renderAll();
       break;
@@ -744,23 +703,17 @@ document.addEventListener('click', (e) => {
     }
     case 'export': exportJSON(); break;
     case 'import': $('#importFile').click(); break;
-    case 'gh-open': openGh(); break;
-    case 'gh-close': $('#ghDialog').close(); break;
-    case 'gh-save': saveGhForm(); break;
-    case 'gh-pull':
-      if ($('#ghDialog').open) readGhForm();
-      ghPull(false);
-      break;
-    case 'gh-push': ghPush(false); break;
-    case 'sheet-reload': sheetFlush(); sheetLoad(false); break;
+    case 'sheet-open': openSheet(); break;
+    case 'sheet-close': $('#sheetDialog').close(); break;
+    case 'sheet-save': saveSheetForm(); break;
+    case 'sheet-reload': load(false); break;
   }
 });
 
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
     e.preventDefault();
-    if (ghReady() && gh.token) ghPush(false);
-    else toast('이 브라우저에 저장되었습니다 (GitHub 미연결)');
+    flush().then(() => !sync.error && toast('구글 시트에 저장되었습니다'));
   }
 });
 
@@ -784,7 +737,7 @@ function importFile(input) {
     try {
       const s = normalize(JSON.parse(reader.result));
       if (!s) throw new Error('형식이 올바르지 않습니다');
-      if (!confirm('현재 데이터를 가져온 파일로 교체할까요?')) return;
+      if (!confirm('현재 데이터를 가져온 파일로 교체할까요?\n구글 시트의 내용도 이 파일 내용으로 바뀝니다.')) return;
       state = s;
       save(); renderAll();
       toast('가져오기 완료');
@@ -795,323 +748,277 @@ function importFile(input) {
   reader.readAsText(file);
 }
 
-/* ---------------- GitHub 동기화 ---------------- */
+/* ---------------- 구글 시트 동기화 ----------------
+ * 데이터 하나(업무 한 줄, 할 일 하나, 요청 하나 …)가 시트 한 줄.
+ * 마지막으로 시트에서 받은 상태(base)와 지금 상태를 비교해 바뀐 칸만 보내므로
+ * 여러 명이 동시에 고쳐도 서로 덮어쓰지 않고, 시트에서 직접 고친 내용도 반영됨 */
 
-function ghReady() { return !!(gh.owner && gh.repo && gh.path); }
-function saveGh() { store.set(LS_GH, JSON.stringify(gh)); }
-
-function openGh() {
-  $('#gh-owner').value = gh.owner;
-  $('#gh-repo').value = gh.repo;
-  $('#gh-branch').value = gh.branch;
-  $('#gh-path').value = gh.path;
-  $('#gh-token').value = gh.token;
-  $('#gh-auto').checked = gh.auto;
-  $('#sheet-url').value = state.sheetUrl;
-  $('#gh-status').textContent = gh.syncedAt ? `마지막 동기화: ${fmt(gh.syncedAt)}` : '아직 동기화한 적 없음';
-  $('#ghDialog').showModal();
-}
-
-function readGhForm() {
-  const prev = `${gh.owner}/${gh.repo}/${gh.branch}/${gh.path}`;
-  gh.owner = $('#gh-owner').value.trim();
-  gh.repo = $('#gh-repo').value.trim();
-  gh.branch = $('#gh-branch').value.trim() || 'main';
-  gh.path = $('#gh-path').value.trim() || 'data.json';
-  gh.token = $('#gh-token').value.trim();
-  gh.auto = $('#gh-auto').checked;
-  if (prev !== `${gh.owner}/${gh.repo}/${gh.branch}/${gh.path}`) gh.sha = '';
-  saveGh();
-  setSync();
-  const url = $('#sheet-url').value.trim();
-  if (url !== state.sheetUrl) {
-    if (url && !/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) return toast('구글 시트 주소는 https://script.google.com/…/exec 형식이어야 합니다', true);
-    state.sheetUrl = url;
-    save();
-    sheetReset();
-  }
-}
-
-function saveGhForm() {
-  readGhForm();
-  $('#ghDialog').close();
-  toast(ghReady() ? 'GitHub 설정이 저장되었습니다' : '설정이 저장되었습니다');
-}
-
-const ghUrl = () => `https://api.github.com/repos/${encodeURIComponent(gh.owner)}/${encodeURIComponent(gh.repo)}/contents/${gh.path.split('/').map(encodeURIComponent).join('/')}`;
-const ghHeaders = () => {
-  const h = { Accept: 'application/vnd.github+json' };
-  if (gh.token) h.Authorization = `Bearer ${gh.token}`;
-  return h;
+const KINDS = {
+  project: ['name'],
+  member: ['project', 'projectName', 'name'],
+  category: ['project', 'projectName', 'name', 'status'],
+  todo: ['project', 'projectName', 'category', 'categoryName', 'text', 'owner', 'done'],
+  schedule: ['project', 'projectName', 'name'],
+  row: ['project', 'projectName', 'schedule', 'scheduleName', 'task', 'cat', 'catName', 'owner', 'start', 'end', 'status', 'progress', 'note', 'updatedBy', 'updatedAt'],
+  request: ['project', 'projectName', 'type', 'from', 'to', 'title', 'body', 'due', 'status', 'answer', 'createdAt', 'updatedBy', 'updatedAt'],
 };
-const b64enc = (str) => {
-  const bytes = new TextEncoder().encode(str);
-  let bin = '';
-  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-  return btoa(bin);
-};
-const b64dec = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, '')), (c) => c.charCodeAt(0)));
+// 부모 종류 (필드 이름도 같음)
+const PARENT = { member: 'project', category: 'project', schedule: 'project', request: 'project', todo: 'category', row: 'schedule' };
+const REQ_FIELDS = ['type', 'from', 'to', 'title', 'body', 'due', 'status', 'answer', 'createdAt', 'updatedBy', 'updatedAt'];
+const ROW_FIELDS = ['task', 'cat', 'owner', 'start', 'end', 'status', 'note', 'updatedBy', 'updatedAt'];
 
-async function ghError(res) {
-  let msg = `${res.status}`;
-  try { msg += ` ${(await res.json()).message}`; } catch { /* 본문 없음 */ }
-  if (res.status === 401) msg = '토큰이 올바르지 않습니다 (401)';
-  if (res.status === 403) msg = '권한이 없거나 요청 한도 초과 (403)';
-  if (res.status === 404) msg = '저장소를 찾을 수 없습니다. 비공개 저장소라면 토큰이 필요합니다 (404)';
-  return new Error(msg);
-}
+const sync = { base: new Map(), trust: false, loaded: false, busy: false, error: '', at: '', timer: null, queue: Promise.resolve(), stale: false };
+const keyOf = (kind, id) => `${kind}:${id}`;
+const pick = (f, keys) => Object.fromEntries(keys.map((k) => [k, f[k]]));
 
-async function ghGet() {
-  const res = await fetch(`${ghUrl()}?ref=${encodeURIComponent(gh.branch)}&_=${Date.now()}`, { headers: ghHeaders(), cache: 'no-store' });
-  if (res.status === 404) {
-    // 파일이 없는지, 저장소 자체가 없는지 구분
-    const repo = await fetch(`https://api.github.com/repos/${encodeURIComponent(gh.owner)}/${encodeURIComponent(gh.repo)}`, { headers: ghHeaders() });
-    if (repo.ok) return null;
-    throw await ghError(repo);
-  }
-  if (!res.ok) throw await ghError(res);
-  const j = await res.json();
-  return { sha: j.sha, data: JSON.parse(b64dec(j.content)) };
-}
-
-async function ghPull(silent) {
-  if (!ghReady()) {
-    if (!silent) { toast('먼저 GitHub 저장소를 설정하세요'); openGh(); }
-    return;
-  }
-  if (syncing) return;
-  if (dirty && !silent && !confirm('아직 GitHub에 올리지 않은 변경사항이 있습니다.\n불러오면 이 변경사항은 사라집니다. 계속할까요?')) return;
-  syncing = true;
-  setSync('loading');
-  try {
-    const r = await ghGet();
-    if (!r) {
-      if (!silent) toast('저장소에 데이터 파일이 아직 없습니다. “GitHub에 저장”으로 처음 업로드하세요.');
-      return;
-    }
-    const s = normalize(r.data);
-    if (!s) throw new Error('데이터 형식이 올바르지 않습니다');
-    const keep = state?.activeId;
-    const prevSheet = state?.sheetUrl;
-    state = s;
-    if (prevSheet !== state.sheetUrl) sheetReset();
-    if (keep && state.projects.some((p) => p.id === keep)) state.activeId = keep;
-    gh.sha = r.sha;
-    gh.syncedAt = now();
-    saveGh();
-    store.set(LS_STATE, JSON.stringify(state));
-    dirty = false;
-    store.set(LS_DIRTY, '0');
-    renderAll();
-    if (!silent) toast('GitHub에서 최신 데이터를 불러왔습니다');
-    if ($('#ghDialog').open) $('#ghDialog').close();
-  } catch (err) {
-    toast(`불러오기 실패: ${err.message}`, true);
-  } finally {
-    syncing = false;
-    setSync();
-  }
-}
-
-async function ghPush(fromAuto) {
-  if (!ghReady() || !gh.token) {
-    if (!fromAuto) { toast('GitHub에 저장하려면 저장소와 토큰을 설정하세요'); openGh(); }
-    return;
-  }
-  if (syncing) {
-    if (fromAuto) { clearTimeout(autoTimer); autoTimer = setTimeout(() => ghPush(true), 3000); }
-    return;
-  }
-  syncing = true;
-  setSync('loading');
-  try {
-    const remote = await ghGet();
-    if (remote && remote.sha !== gh.sha) {
-      // 내가 마지막으로 받은 이후 다른 사람이 저장함
-      const who = remote.data?.updatedBy ? `${remote.data.updatedBy}님이 ${fmt(remote.data.updatedAt)}에 ` : '';
-      if (fromAuto) {
-        toast(`${who}먼저 저장했습니다. 불러오기 후 다시 저장하세요.`, true);
-        return;
-      }
-      if (!confirm(`${who}GitHub에 먼저 저장한 변경사항이 있습니다.\n\n[확인] 내 데이터로 덮어쓰기\n[취소] 중단 (불러오기로 최신 데이터를 먼저 받으세요)`)) return;
-    }
-    const body = {
-      message: `대시보드 업데이트 - ${user || '익명'} (${fmt(now())})`,
-      content: b64enc(JSON.stringify(state, null, 2)),
-      branch: gh.branch,
-    };
-    if (remote) body.sha = remote.sha;
-    const res = await fetch(ghUrl(), { method: 'PUT', headers: { ...ghHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (!res.ok) throw await ghError(res);
-    const j = await res.json();
-    gh.sha = j.content.sha;
-    gh.syncedAt = now();
-    saveGh();
-    dirty = false;
-    store.set(LS_DIRTY, '0');
-    renderFoot();
-    if (!fromAuto) toast('GitHub에 저장되었습니다');
-  } catch (err) {
-    toast(`저장 실패: ${err.message}`, true);
-  } finally {
-    syncing = false;
-    setSync();
-  }
-}
-
-// 다른 탭/앱에서 돌아왔을 때 변경사항이 없으면 최신 데이터 자동 반영
-// (토큰 없는 사용자는 시간당 60회 API 제한이 있어 1분에 한 번만 확인)
-let lastFocusPull = 0;
-window.addEventListener('focus', () => {
-  if (!ghReady() || dirty || syncing || Date.now() - lastFocusPull < 60000) return;
-  lastFocusPull = Date.now();
-  ghPull(true);
-});
-
-/* ---------------- 구글 시트 (업무 요청·질문) ----------------
- * 요청 하나 = 시트 한 줄. 수정은 바뀐 칸만 보내므로 동시에 고쳐도 서로 덮어쓰지 않음 */
-
-const sheet = { items: [], loaded: false, loading: false, saving: false, error: '', at: '', pending: {}, retry: [], timer: null, queue: Promise.resolve(), stale: false, asked: false };
-function sheetOn() { return !!state?.sheetUrl; }
-function reqsOf(p) { return sheetOn() ? sheet.items.filter((q) => q.project === p.id) : p.requests; }
-
-function sheetReset() {
-  Object.assign(sheet, { items: [], loaded: false, error: '', pending: {}, retry: [], asked: false });
-  renderRequests(); renderSummary(); renderMemberList();
-  sheetLoad(true);
-}
-
-function sheetPatch(q, k) {
-  const f = (sheet.pending[q.id] ||= {});
-  f[k] = q[k];
-  f.updatedBy = q.updatedBy;
-  f.updatedAt = q.updatedAt;
-  f.projectName = state.projects.find((p) => p.id === q.project)?.name || q.projectName || '';
-  clearTimeout(sheet.timer);
-  sheet.timer = setTimeout(sheetFlush, 800);
-}
-
-function sheetFlush() {
-  clearTimeout(sheet.timer);
-  const ops = [...sheet.retry, ...Object.entries(sheet.pending).map(([id, fields]) => ({ op: 'patch', id, fields }))];
-  sheet.retry = [];
-  sheet.pending = {};
-  if (ops.length) sheetSend(ops);
-}
-
-function sheetSend(ops) {
-  sheet.queue = sheet.queue.then(async () => {
-    sheet.saving = true;
-    renderSheetState();
-    try {
-      const j = await sheetFetch({ method: 'POST', body: JSON.stringify({ ops }) });
-      sheet.error = '';
-      applySheet(j.items);
-    } catch (err) {
-      sheet.retry.push(...ops); // 다음 저장·새로고침 때 다시 시도
-      sheet.error = err.message;
-      toast(`구글 시트 저장 실패 (잠시 후 다시 시도합니다): ${err.message}`, true);
-    } finally {
-      sheet.saving = false;
-      renderSheetState();
-    }
+// 비교할 수 있도록 모든 값을 문자열로 맞춤
+function canon(kind, o) {
+  const f = {};
+  KINDS[kind].forEach((k) => {
+    const v = o[k];
+    if (k === 'done') f[k] = v === true || String(v).toUpperCase() === 'TRUE' ? 'TRUE' : 'FALSE';
+    else if (k === 'progress') f[k] = String(Number(v) || 0);
+    else f[k] = v == null ? '' : String(v);
   });
-  return sheet.queue;
+  return f;
 }
 
-async function sheetFetch(opt) {
+function flatten(s) {
+  const m = new Map();
+  const put = (kind, id, o) => m.set(keyOf(kind, id), { kind, id, f: canon(kind, o) });
+  (s?.projects || []).forEach((p) => {
+    const P = { project: p.id, projectName: p.name };
+    put('project', p.id, { name: p.name });
+    p.members.forEach((n) => put('member', `${p.id}|${n}`, { ...P, name: n }));
+    p.categories.forEach((c) => {
+      put('category', c.id, { ...P, name: c.name, status: c.status });
+      c.todos.forEach((o) => put('todo', o.id, { ...o, ...P, category: c.id, categoryName: c.name }));
+    });
+    p.schedules.forEach((sc) => {
+      put('schedule', sc.id, { ...P, name: sc.name });
+      sc.rows.forEach((r) => put('row', r.id, { ...r, ...P, schedule: sc.id, scheduleName: sc.name, catName: p.categories.find((c) => c.id === r.cat)?.name || '' }));
+    });
+    p.requests.forEach((q) => put('request', q.id, { ...q, ...P }));
+  });
+  return m;
+}
+
+function build(flat) {
+  const of = (kind) => [...flat.values()].filter((x) => x.kind === kind);
+  const projects = of('project').map(({ id, f }) => ({ id, name: f.name, members: [], categories: [], schedules: [], requests: [] }));
+  const P = new Map(projects.map((p) => [p.id, p]));
+  of('member').forEach(({ f }) => P.get(f.project)?.members.push(f.name));
+  of('category').forEach(({ id, f }) => P.get(f.project)?.categories.push({ id, name: f.name, status: f.status, todos: [] }));
+  const C = new Map(projects.flatMap((p) => p.categories.map((c) => [c.id, c])));
+  of('todo').forEach(({ id, f }) => C.get(f.category)?.todos.push({ id, text: f.text, owner: f.owner, done: f.done === 'TRUE' }));
+  of('schedule').forEach(({ id, f }) => P.get(f.project)?.schedules.push({ id, name: f.name, rows: [] }));
+  const S = new Map(projects.flatMap((p) => p.schedules.map((s) => [s.id, s])));
+  of('row').forEach(({ id, f }) => S.get(f.schedule)?.rows.push({ id, ...pick(f, ROW_FIELDS), progress: Number(f.progress) || 0 }));
+  of('request').forEach(({ id, f }) => P.get(f.project)?.requests.push({ id, ...pick(f, REQ_FIELDS) }));
+  projects.forEach((p) => { if (!p.schedules.length) p.schedules.push({ id: uid(), name: '메인 스케줄', rows: [] }); });
+  return { version: 3, projects, activeId: '' };
+}
+
+// 부모가 없는 줄(시트에서 직접 잘못 넣은 줄 등)은 지우지 않고 그대로 둠
+function orphan(r, flat) {
+  const pk = PARENT[r.kind];
+  if (!pk) return false;
+  const parent = flat.get(keyOf(pk, r.f[pk]));
+  return !parent || orphan(parent, flat);
+}
+
+function diff(base, cur) {
+  const ops = [];
+  cur.forEach((r, key) => {
+    const b = base.get(key);
+    if (!b) return ops.push({ op: 'create', kind: r.kind, item: { id: r.id, ...r.f } });
+    const fields = {};
+    Object.keys(r.f).forEach((k) => { if (r.f[k] !== b.f[k]) fields[k] = r.f[k]; });
+    if (Object.keys(fields).length) ops.push({ op: 'patch', kind: r.kind, id: r.id, fields });
+  });
+  base.forEach((b, key) => { if (!cur.has(key) && !orphan(b, base)) ops.push({ op: 'delete', kind: b.kind, id: b.id }); });
+  return ops;
+}
+
+const pendingOps = () => (state && sync.loaded && sync.trust ? diff(sync.base, flatten(state)) : []);
+
+function remoteFlat(data) {
+  const m = new Map();
+  Object.keys(KINDS).forEach((kind) => (data[kind] || []).forEach((o) => {
+    m.set(keyOf(kind, o.id), { kind, id: String(o.id), f: canon(kind, o) });
+  }));
+  return m;
+}
+
+function keepLocal() {
+  if (!sync.trust) return;
+  store.set(LS_STATE, JSON.stringify(state));
+  store.set(LS_BASE, JSON.stringify([...sync.base.values()]));
+}
+
+// 시트 내용 위에 아직 보내지 않은 내 변경을 얹어서 화면 상태를 만듦
+function applyRemote(data, ref) {
+  const remote = remoteFlat(data);
+  const empty = !(data.project || []).length;
+  const local = sync.trust && state ? flatten(state) : null;
+  const ops = local ? diff(empty ? remote : ref || sync.base, local) : [];
+  const merged = new Map(remote);
+  ops.forEach((op) => {
+    const key = keyOf(op.kind, op.id || op.item.id);
+    if (op.op === 'create') merged.set(key, { kind: op.kind, id: op.item.id, f: canon(op.kind, op.item) });
+    else if (op.op === 'delete') merged.delete(key);
+    else if (merged.has(key)) merged.set(key, { ...merged.get(key), f: { ...merged.get(key).f, ...op.fields } });
+  });
+  const active = state?.activeId || store.get(LS_ACTIVE);
+  sync.base = remote;
+  sync.trust = true;
+  sync.loaded = true;
+  sync.at = now();
+  state = build(merged);
+  state.activeId = state.projects.some((p) => p.id === active) ? active : state.projects[0]?.id;
+  keepLocal();
+  if (editing() || pointerDown) sync.stale = true; // 입력 중에는 화면을 다시 그리지 않음
+  else renderAll();
+}
+
+async function call(ops) {
   // Content-Type을 지정하지 않아야(text/plain) 브라우저 사전 요청 없이 Apps Script로 전송됨
-  const res = await fetch(opt?.method === 'POST' ? state.sheetUrl : `${state.sheetUrl}?_=${Date.now()}`, opt);
+  const res = await fetch(ops ? sheetUrl : `${sheetUrl}?_=${Date.now()}`, ops ? { method: 'POST', body: JSON.stringify({ ops }) } : { cache: 'no-store' });
   if (!res.ok) throw new Error(`${res.status}`);
   let j;
   try { j = await res.json(); } catch { throw new Error('응답 형식 오류 (웹 앱 액세스 권한을 "모든 사용자"로 배포했는지 확인)'); }
   if (!j.ok) throw new Error(j.error || '알 수 없는 오류');
+  if (!j.data) throw new Error('구글 시트 스크립트가 예전 버전입니다. google-sheet.gs로 다시 배포하세요');
   return j;
 }
 
-async function sheetLoad(silent) {
-  if (!sheetOn() || sheet.loading) return;
-  sheet.loading = true;
+function enqueue(task, silent = true) {
+  sync.queue = sync.queue.then(async () => {
+    sync.busy = true;
+    setSync();
+    try {
+      await task();
+      sync.error = '';
+    } catch (err) {
+      if (!silent || !sync.error) toast(`구글 시트 연결 실패: ${err.message}`, true);
+      sync.error = err.message;
+    } finally {
+      sync.busy = false;
+      setSync();
+    }
+  });
+  return sync.queue;
+}
+
+function flush() {
+  clearTimeout(sync.timer);
+  sync.timer = null;
+  return enqueue(async () => {
+    if (!sync.loaded || !sync.trust) return; // 처음 불러오기 전에는 보내지 않음
+    const cur = flatten(state);
+    const ops = diff(sync.base, cur);
+    if (!ops.length) return;
+    try {
+      applyRemote((await call(ops)).data, cur);
+    } catch (err) {
+      sync.timer = setTimeout(flush, 15000); // 잠시 후 다시 시도
+      throw err;
+    }
+  });
+}
+
+function load(silent) {
+  return enqueue(async () => {
+    const { data } = await call();
+    if (!(data.project || []).length && (!state || !sync.trust)) {
+      // 시트가 비어 있으면 지금(또는 예전) 데이터로 채움
+      state = state || (await seed());
+      sync.trust = true;
+    }
+    applyRemote(data);
+    if (!silent) toast('구글 시트에서 최신 데이터를 불러왔습니다');
+  }, silent).then(() => { if (pendingOps().length && !sync.timer) flush(); });
+}
+
+// 예전 버전 데이터(이 브라우저 또는 저장소의 data.json) 중 최신 것
+async function seed() {
+  let s = null;
+  try { s = normalize(JSON.parse(store.get(LS_LEGACY) || 'null')); } catch { /* 없음 */ }
   try {
-    if (sheet.retry.length || Object.keys(sheet.pending).length) sheetFlush();
-    await sheet.queue;
-    const j = await sheetFetch();
-    sheet.error = '';
-    applySheet(j.items);
-    if (!silent) toast('구글 시트에서 최신 요청을 불러왔습니다');
-    migrateToSheet();
-  } catch (err) {
-    sheet.error = err.message;
-    if (!silent) toast(`구글 시트 불러오기 실패: ${err.message}`, true);
-    renderRequests();
-  } finally {
-    sheet.loading = false;
+    const res = await fetch(`data.json?_=${Date.now()}`, { cache: 'no-store' });
+    const remote = res.ok ? normalize(await res.json()) : null;
+    if (remote && (!s || (remote.updatedAt || '') > (s.updatedAt || ''))) s = remote;
+  } catch { /* 로컬 파일로 열었을 때 */ }
+  return s || sampleState();
+}
+
+function openSheet() {
+  $('#sheet-url').value = sheetUrl;
+  $('#sheet-status').textContent = sync.error ? `오류: ${sync.error}` : sync.at ? `마지막 동기화: ${fmt(sync.at)}` : '아직 연결되지 않음';
+  $('#sheetDialog').showModal();
+}
+
+function saveSheetForm() {
+  const url = $('#sheet-url').value.trim() || DEFAULT_SHEET_URL;
+  if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) return toast('주소는 https://script.google.com/…/exec 형식이어야 합니다', true);
+  $('#sheetDialog').close();
+  if (url === sheetUrl) return;
+  sheetUrl = url;
+  store.set(LS_SHEET, url === DEFAULT_SHEET_URL ? '' : url);
+  // 새 시트에 데이터가 있으면 그걸 쓰고, 비어 있으면 지금 데이터로 채움
+  Object.assign(sync, { base: new Map(), trust: false, loaded: false, error: '' });
+  load(false);
+}
+
+function editing() {
+  const a = document.activeElement;
+  return !!a?.closest?.('.app') && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && !['checkbox', 'range'].includes(a.type);
+}
+
+let pointerDown = false;
+function catchUp() {
+  if (sync.stale && !editing() && !pointerDown) {
+    sync.stale = false;
+    renderAll();
   }
 }
+document.addEventListener('pointerdown', () => (pointerDown = true), true);
+document.addEventListener('pointerup', () => setTimeout(() => { pointerDown = false; catchUp(); }, 0), true);
+document.addEventListener('focusout', () => setTimeout(catchUp, 0));
 
-function applySheet(items) {
-  // 아직 보내지 않은 내 수정·추가는 유지
-  items.forEach((q) => sheet.pending[q.id] && Object.assign(q, sheet.pending[q.id]));
-  sheet.retry.filter((op) => op.op === 'create' && !items.some((q) => q.id === op.item.id)).forEach((op) => items.push(op.item));
-  const removed = new Set(sheet.retry.filter((op) => op.op === 'delete').map((op) => op.id));
-  sheet.items = items.filter((q) => !removed.has(q.id));
-  sheet.loaded = true;
-  sheet.at = now();
-  if (document.activeElement?.closest('#requests')) sheet.stale = true; // 입력 중에는 화면을 다시 그리지 않음
-  else renderRequests();
-  renderSummary(); renderMemberList();
-}
-
-function renderSheetState() {
-  if (sheet.stale || document.activeElement?.closest('#requests')) return;
-  renderRequests();
-}
-
-// 예전에 대시보드 안에 저장된 요청이 있으면 한 번 시트로 옮길지 물어봄
-function migrateToSheet() {
-  if (sheet.asked) return;
-  sheet.asked = true;
-  const ids = new Set(sheet.items.map((q) => q.id));
-  const old = state.projects.flatMap((p) => p.requests.filter((q) => !ids.has(q.id)).map((q) => ({ ...q, project: p.id, projectName: p.name })));
-  if (!old.length || !confirm(`대시보드에 저장된 기존 업무 요청·질문 ${old.length}건을 구글 시트로 옮길까요?`)) return;
-  sheet.items.push(...old);
-  sheetSend(old.map((item) => ({ op: 'create', item }))).then(() => {
-    if (sheet.retry.length) return;
-    state.projects.forEach((p) => (p.requests = []));
-    save();
-    toast(`${old.length}건을 구글 시트로 옮겼습니다`);
-  });
-  renderRequests(); renderSummary();
-}
-
-document.addEventListener('focusout', () => setTimeout(() => {
-  if (sheet.stale && !document.activeElement?.closest('#requests')) renderRequests();
-}, 0));
-setInterval(() => { if (!document.hidden) sheetLoad(true); }, 20000);
-window.addEventListener('focus', () => sheetLoad(true));
+setInterval(() => { if (!document.hidden && !sync.busy) load(true); }, 20000);
+setInterval(catchUp, 2000); // 포커스 이벤트를 놓친 경우 대비
+window.addEventListener('focus', () => { if (!sync.busy) load(true); });
+// 창을 닫을 때 아직 못 보낸 변경이 있으면 마지막으로 전송 (실패해도 다음에 열 때 다시 보냄)
+window.addEventListener('pagehide', () => {
+  const ops = pendingOps();
+  if (ops.length) navigator.sendBeacon?.(sheetUrl, new Blob([JSON.stringify({ ops })], { type: 'text/plain' }));
+});
 
 /* ---------------- 시작 ---------------- */
 
 async function init() {
-  try { state = normalize(JSON.parse(store.get(LS_STATE) || 'null')); } catch { state = null; }
-
-  if (!ghReady()) {
-    // GitHub Pages로 배포된 경우 저장소의 data.json을 기본 데이터로 사용
-    try {
-      const res = await fetch(`data.json?_=${Date.now()}`, { cache: 'no-store' });
-      if (res.ok) {
-        const remote = normalize(await res.json());
-        if (remote && (!state || (!dirty && remote.updatedAt > state.updatedAt))) state = remote;
-      }
-    } catch { /* 로컬 파일로 열었을 때 */ }
+  try {
+    const s = normalize(JSON.parse(store.get(LS_STATE) || 'null'));
+    const b = JSON.parse(store.get(LS_BASE) || 'null');
+    if (s && Array.isArray(b)) {
+      state = s;
+      sync.base = new Map(b.map((r) => [keyOf(r.kind, r.id), r]));
+      sync.trust = true;
+    }
+  } catch { state = null; }
+  if (state) {
+    const active = store.get(LS_ACTIVE);
+    if (state.projects.some((p) => p.id === active)) state.activeId = active;
+    renderAll(); // 시트를 불러오는 동안 지난번 내용을 먼저 보여줌
   }
-  if (!state) state = sampleState();
-  renderAll();
-  sheetLoad(true);
-  if (ghReady()) {
-    if (dirty) toast('GitHub에 아직 올리지 않은 변경사항이 있습니다');
-    else ghPull(true);
+  await load(true);
+  if (!state) {
+    // 시트에 연결하지 못함: 예전 데이터를 보여주되 시트로 보내지는 않음
+    state = await seed();
+    renderAll();
   }
 }
 
 init();
+
