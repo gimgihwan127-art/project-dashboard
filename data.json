@@ -137,6 +137,19 @@
               "note": "",
               "updatedBy": "익명",
               "updatedAt": "2026-11-01T09:20:15.776Z"
+            },
+            {
+              "id": "l0ht00dfhv",
+              "task": "",
+              "cat": "oev6x7xr4p",
+              "owner": "",
+              "start": "2026-11-01",
+              "end": "2026-11-08",
+              "status": "대기",
+              "progress": 0,
+              "note": "",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T09:20:24.499Z"
             }
           ]
         }
@@ -622,7 +635,7 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T09:20:15.776Z",
+  "updatedAt": "2026-11-01T09:20:24.499Z",
   "updatedBy": "익명",
   "sheetUrl": "https://script.google.com/macros/s/AKfycbyOJIHJqleBo7xqfG7bNRIqR51W_PCz6pHzAPP5gETUClMraZlgiRIp5mt9QSZn7aSO/exec"
 }
