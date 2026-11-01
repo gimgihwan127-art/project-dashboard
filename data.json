@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "activeId": "quti5wrb79",
+  "activeId": "r6z6y0xr4p",
   "projects": [
     {
       "id": "r6z6y0xr4p",
@@ -36,6 +36,23 @@
               "done": false
             }
           ]
+        },
+        {
+          "id": "5hrhhxcl9c",
+          "name": "PM",
+          "status": "",
+          "todos": [
+            {
+              "id": "u4jlm6cqme",
+              "text": "큐시트 제작",
+              "owner": "김기환",
+              "done": false,
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T09:20:04.605Z"
+            }
+          ],
+          "updatedBy": "익명",
+          "updatedAt": "2026-11-01T09:19:48.364Z"
         }
       ],
       "schedules": [
@@ -59,7 +76,7 @@
             {
               "id": "0sfj4zxr4p",
               "task": "행사 준비",
-              "cat": "",
+              "cat": "5hrhhxcl9c",
               "owner": "김기환",
               "start": "2026-11-02",
               "end": "2026-11-13",
@@ -67,7 +84,7 @@
               "progress": 10,
               "note": "",
               "updatedBy": "익명",
-              "updatedAt": "2026-10-31T13:45:12.307Z"
+              "updatedAt": "2026-11-01T09:20:09.047Z"
             },
             {
               "id": "haha4cxr4p",
@@ -592,7 +609,7 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T06:09:21.257127Z",
-  "updatedBy": "김준연",
+  "updatedAt": "2026-11-01T09:20:09.047Z",
+  "updatedBy": "익명",
   "sheetUrl": "https://script.google.com/macros/s/AKfycbyOJIHJqleBo7xqfG7bNRIqR51W_PCz6pHzAPP5gETUClMraZlgiRIp5mt9QSZn7aSO/exec"
 }
