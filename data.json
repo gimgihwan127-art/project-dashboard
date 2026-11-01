@@ -407,10 +407,10 @@
               "start": "2026-11-02",
               "end": "2026-11-06",
               "status": "진행중",
-              "progress": 10,
+              "progress": 0,
               "note": "QR(전화번호 수집) vs 대면",
               "updatedBy": "김준연",
-              "updatedAt": "2026-11-01T05:27:42.118Z"
+              "updatedAt": "2026-11-01T05:28:11.333Z"
             },
             {
               "id": "ntb6a0u5r4",
@@ -700,6 +700,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T05:27:47.462Z",
+  "updatedAt": "2026-11-01T05:28:11.333Z",
   "updatedBy": "김준연"
 }
