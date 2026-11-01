@@ -398,11 +398,11 @@
               "owner": "김준연",
               "start": "2026-11-02",
               "end": "2026-11-06",
-              "status": "대기",
-              "progress": 0,
+              "status": "진행중",
+              "progress": 10,
               "note": "QR(전화번호 수집) vs 대면",
               "updatedBy": "김준연",
-              "updatedAt": "2026-11-01T05:26:13.085Z"
+              "updatedAt": "2026-11-01T05:27:01.312Z"
             },
             {
               "id": "ntb6a0u5r4",
@@ -412,10 +412,10 @@
               "start": "2026-11-02",
               "end": "2026-11-13",
               "status": "진행중",
-              "progress": 0,
+              "progress": 45,
               "note": "옆 대관장 동선 겹침 확인 포함",
-              "updatedBy": "익명",
-              "updatedAt": "2026-11-01T05:22:00.000Z"
+              "updatedBy": "김준연",
+              "updatedAt": "2026-11-01T05:27:03.807Z"
             },
             {
               "id": "317tmvpmlf",
@@ -692,6 +692,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T05:26:50.761Z",
+  "updatedAt": "2026-11-01T05:27:03.807Z",
   "updatedBy": "김준연"
 }
