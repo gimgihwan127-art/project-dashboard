@@ -202,18 +202,6 @@
               "text": "[아나운서] 계약서 서명 (교육팀 전담)",
               "owner": "최원정",
               "done": false
-            },
-            {
-              "id": "owohv4kqd0",
-              "text": "[현장] 대본 초안 아나운서 전달 (행사 7일 전)",
-              "owner": "김준연",
-              "done": false
-            },
-            {
-              "id": "ozk5q8b33l",
-              "text": "[현장] 운영 준비물 체크리스트 작성",
-              "owner": "김준연",
-              "done": false
             }
           ]
         },
@@ -662,6 +650,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T05:29:42.178Z",
+  "updatedAt": "2026-11-01T05:29:44.609Z",
   "updatedBy": "김준연"
 }
