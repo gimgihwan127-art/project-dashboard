@@ -75,7 +75,7 @@
             },
             {
               "id": "0sfj4zxr4p",
-              "task": "행사 준비",
+              "task": "큐시트 제작",
               "cat": "5hrhhxcl9c",
               "owner": "김기환",
               "start": "2026-11-02",
@@ -84,7 +84,7 @@
               "progress": 10,
               "note": "",
               "updatedBy": "익명",
-              "updatedAt": "2026-11-01T09:20:09.047Z"
+              "updatedAt": "2026-11-01T09:20:13.188Z"
             },
             {
               "id": "haha4cxr4p",
@@ -124,6 +124,19 @@
               "note": "",
               "updatedBy": "익명",
               "updatedAt": "2026-10-31T13:45:29.440Z"
+            },
+            {
+              "id": "trxir8d8rk",
+              "task": "",
+              "cat": "oev6x7xr4p",
+              "owner": "",
+              "start": "2026-11-01",
+              "end": "2026-11-08",
+              "status": "대기",
+              "progress": 0,
+              "note": "",
+              "updatedBy": "익명",
+              "updatedAt": "2026-11-01T09:20:15.776Z"
             }
           ]
         }
@@ -609,7 +622,7 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T09:20:09.047Z",
+  "updatedAt": "2026-11-01T09:20:15.776Z",
   "updatedBy": "익명",
   "sheetUrl": "https://script.google.com/macros/s/AKfycbyOJIHJqleBo7xqfG7bNRIqR51W_PCz6pHzAPP5gETUClMraZlgiRIp5mt9QSZn7aSO/exec"
 }
