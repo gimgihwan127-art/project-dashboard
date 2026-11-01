@@ -446,15 +446,15 @@
             {
               "id": "guxhlsbcx6",
               "task": "현수막 최종 확정",
-              "cat": "3af1hurb79",
-              "owner": "김한새",
+              "cat": "",
+              "owner": "김준연",
               "start": "2026-11-02",
               "end": "2026-11-06",
               "status": "대기",
               "progress": 0,
               "note": "권장 설치 합계 금액 확인 필요, 백월 실측 포함",
-              "updatedBy": "익명",
-              "updatedAt": "2026-11-01T05:22:00.000Z"
+              "updatedBy": "김준연",
+              "updatedAt": "2026-11-01T05:27:15.515Z"
             },
             {
               "id": "tuttymmurj",
@@ -463,11 +463,11 @@
               "owner": "김한새",
               "start": "2026-11-09",
               "end": "2026-11-12",
-              "status": "대기",
-              "progress": 0,
+              "status": "진행중",
+              "progress": 10,
               "note": "출력 3일 소요, 11/12 수령 목표",
-              "updatedBy": "익명",
-              "updatedAt": "2026-11-01T05:22:00.000Z"
+              "updatedBy": "김준연",
+              "updatedAt": "2026-11-01T05:27:19.240Z"
             },
             {
               "id": "jq9v438pay",
@@ -692,6 +692,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T05:27:03.807Z",
+  "updatedAt": "2026-11-01T05:27:19.240Z",
   "updatedBy": "김준연"
 }
