@@ -111,22 +111,7 @@
           ]
         }
       ],
-      "requests": [
-        {
-          "id": "97ykioxr4p",
-          "type": "요청",
-          "from": "",
-          "to": "",
-          "title": "SNS용 배너 3종 요청",
-          "body": "1080x1080, 1080x1920 사이즈로 부탁드립니다.",
-          "due": "2026-11-03",
-          "status": "요청됨",
-          "answer": "",
-          "createdAt": "2026-10-31T13:04:29.593Z",
-          "updatedBy": "",
-          "updatedAt": "2026-10-31T13:04:29.593Z"
-        }
-      ],
+      "requests": [],
       "updatedBy": "익명",
       "updatedAt": "2026-10-31T13:10:43.808Z",
       "members": [
@@ -508,22 +493,7 @@
           ]
         }
       ],
-      "requests": [
-        {
-          "id": "9lak57kdku",
-          "type": "요청",
-          "from": "김준연",
-          "to": "송지민",
-          "title": "사업단별 인터뷰 대상자 요청",
-          "body": "사업단별 인터뷰 대상자를 요청드립니다. 이전 VCC와 위치를 비교해 확정할 예정입니다.",
-          "due": "2026-11-06",
-          "status": "요청됨",
-          "answer": "",
-          "createdAt": "2026-11-01T05:22:00.000Z",
-          "updatedBy": "",
-          "updatedAt": "2026-11-01T05:22:00.000Z"
-        }
-      ],
+      "requests": [],
       "members": [
         "최원정",
         "송지민",
@@ -622,6 +592,7 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T05:30:09.305Z",
-  "updatedBy": "김준연"
+  "updatedAt": "2026-11-01T06:09:21.257127Z",
+  "updatedBy": "김준연",
+  "sheetUrl": "https://script.google.com/macros/s/AKfycbyOJIHJqleBo7xqfG7bNRIqR51W_PCz6pHzAPP5gETUClMraZlgiRIp5mt9QSZn7aSO/exec"
 }
