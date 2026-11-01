@@ -149,7 +149,9 @@
               "id": "d9ascf5wdm",
               "text": "[모객] 내부 모객 최종 추천안 작성 (이번 주)",
               "owner": "최원정",
-              "done": false
+              "done": false,
+              "updatedBy": "김준연",
+              "updatedAt": "2026-11-01T05:28:59.358Z"
             },
             {
               "id": "atoo71taun",
@@ -700,6 +702,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T05:28:21.587Z",
+  "updatedAt": "2026-11-01T05:28:59.358Z",
   "updatedBy": "김준연"
 }
