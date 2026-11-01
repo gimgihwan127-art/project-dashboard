@@ -160,12 +160,6 @@
               "done": false
             },
             {
-              "id": "w1a3obxgvz",
-              "text": "[대관] 당일 오퍼레이팅 업체 확정 (음원·스크린 조절, 조명은 우리 측)",
-              "owner": "최원정",
-              "done": false
-            },
-            {
               "id": "8uopbwwmwq",
               "text": "[대관] 의전 인원 산정",
               "owner": "최원정",
@@ -690,6 +684,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T05:29:06.555Z",
+  "updatedAt": "2026-11-01T05:29:13.219Z",
   "updatedBy": "김준연"
 }
