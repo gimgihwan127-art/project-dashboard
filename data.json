@@ -62,16 +62,16 @@
           "rows": [
             {
               "id": "5zql85xr4p",
-              "task": "모객 현황 취합",
+              "task": "아나운서 스크립트 초안제작",
               "cat": "5hrhhxcl9c",
-              "owner": "",
+              "owner": "김기환",
               "start": "2026-10-24",
               "end": "2026-11-21",
               "status": "진행중",
               "progress": 10,
               "note": "",
               "updatedBy": "익명",
-              "updatedAt": "2026-11-01T09:20:37.148Z"
+              "updatedAt": "2026-11-01T09:20:47.267Z"
             },
             {
               "id": "0sfj4zxr4p",
@@ -635,7 +635,7 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T09:20:37.148Z",
+  "updatedAt": "2026-11-01T09:20:47.267Z",
   "updatedBy": "익명",
   "sheetUrl": "https://script.google.com/macros/s/AKfycbyOJIHJqleBo7xqfG7bNRIqR51W_PCz6pHzAPP5gETUClMraZlgiRIp5mt9QSZn7aSO/exec"
 }
