@@ -86,6 +86,9 @@
       <label>개인 액세스 토큰 (이 브라우저에만 저장됨)<input id="gh-token" type="password" placeholder="github_pat_..." autocomplete="off"></label>
       <label class="check"><input type="checkbox" id="gh-auto"> 변경 후 자동으로 GitHub에 저장</label>
       <p class="hint" id="gh-status"></p>
+      <h3 class="sub-h">구글 시트 연결 (업무 요청 · 질문)</h3>
+      <label>Apps Script 웹 앱 주소 (팀 전체에 공유됨)<input id="sheet-url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off"></label>
+      <p class="hint">입력하면 업무 요청·질문은 구글 시트에 한 줄씩 저장되어, 여러 명이 동시에 수정해도 겹치지 않습니다. 비우면 대시보드 데이터에 저장합니다.</p>
       <div class="gh-actions">
         <button type="button" class="btn-light" data-act="gh-close">닫기</button>
         <button type="button" class="btn-light" data-act="gh-pull">불러오기</button>
