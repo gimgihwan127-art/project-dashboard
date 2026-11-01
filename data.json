@@ -379,19 +379,6 @@
           "name": "메인 스케줄",
           "rows": [
             {
-              "id": "gedegwzjlu",
-              "task": "내부 모객 최종 추천안",
-              "cat": "75dedrrb79",
-              "owner": "최원정",
-              "start": "2026-11-02",
-              "end": "2026-11-06",
-              "status": "진행중",
-              "progress": 0,
-              "note": "현재 116명, 내부 예상 150명",
-              "updatedBy": "익명",
-              "updatedAt": "2026-11-01T05:22:00.000Z"
-            },
-            {
               "id": "sl025xmmvx",
               "task": "모객 최종 확정",
               "cat": "75dedrrb79",
@@ -415,7 +402,7 @@
               "progress": 0,
               "note": "QR(전화번호 수집) vs 대면",
               "updatedBy": "김준연",
-              "updatedAt": "2026-11-01T05:26:05.700Z"
+              "updatedAt": "2026-11-01T05:26:13.085Z"
             },
             {
               "id": "ntb6a0u5r4",
@@ -718,6 +705,6 @@
       "requests": []
     }
   ],
-  "updatedAt": "2026-11-01T05:26:05.700Z",
+  "updatedAt": "2026-11-01T05:26:14.114Z",
   "updatedBy": "김준연"
 }
