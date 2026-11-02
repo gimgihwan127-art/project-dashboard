@@ -23,6 +23,11 @@ const TABLES = {
     cols: [...BASE, ['category', '카테고리ID'], ['categoryName', '카테고리'], ['text', '할 일'], ['owner', '담당'], ['done', '완료']],
   },
   schedule: { tab: '스케줄표', cols: [...BASE, ['name', '스케줄표']] },
+  file: {
+    tab: '첨부파일',
+    cols: [...BASE, ['title', '제목'], ['name', '파일명'], ['mime', '형식'], ['fileId', '드라이브ID'], ['size', '크기'],
+      ['updatedBy', '올린 사람'], ['updatedAt', '올린 시각'], ['thumb', '미리보기(자동)']],
+  },
   row: {
     tab: '스케줄',
     cols: [...BASE, ['schedule', '스케줄표ID'], ['scheduleName', '스케줄표'], ['task', '업무명'], ['cat', '카테고리ID'],
@@ -165,6 +170,7 @@ function apply_(c, ops) {
       if (kind === 'request') rename_(c.ss, at.sh, f.projectName); // 프로젝트 이름이 바뀌면 탭 이름도 맞춤
     } else if (op.op === 'delete') {
       if (at) dels.push(at);
+      if (at && kind === 'file') trash_(at.sh.getRange(at.row, keysOf_('file').indexOf('fileId') + 1).getValue());
       if (kind === 'project') dropTabs.push(id);
     }
   });
@@ -192,16 +198,66 @@ function reply_(c) {
   return json_({ ok: true, data, items: data.request });
 }
 
-function doGet() {
+/* 첨부파일: 파일 자체는 드라이브 폴더에, 시트에는 정보만 저장 */
+const FOLDER_NAME = '프로젝트 대시보드 첨부파일';
+const MAX_BYTES = 20 * 1024 * 1024;
+
+function folder_() {
+  const props = PropertiesService.getScriptProperties();
+  const id = props.getProperty('folderId');
+  if (id) {
+    try {
+      const f = DriveApp.getFolderById(id);
+      if (!f.isTrashed()) return f;
+    } catch (err) { /* 폴더가 지워짐 → 새로 만듦 */ }
+  }
+  const f = DriveApp.createFolder(FOLDER_NAME);
+  props.setProperty('folderId', f.getId());
+  return f;
+}
+
+// 대시보드 폴더 안의 파일만 꺼낼 수 있음 (다른 드라이브 파일 보호)
+function ownFile_(id) {
+  const file = DriveApp.getFileById(String(id));
+  const fid = folder_().getId();
+  const parents = file.getParents();
+  while (parents.hasNext()) if (parents.next().getId() === fid) return file;
+  throw new Error('대시보드 첨부파일이 아닙니다');
+}
+
+function upload_(u) {
+  const bytes = Utilities.base64Decode(u.data);
+  if (bytes.length > MAX_BYTES) throw new Error('파일이 너무 큽니다 (최대 20MB)');
+  const file = folder_().createFile(Utilities.newBlob(bytes, u.mime || 'application/octet-stream', u.name || '첨부파일'));
+  return { ok: true, fileId: file.getId(), size: bytes.length };
+}
+
+function trash_(id) {
+  try { if (id) ownFile_(id).setTrashed(true); } catch (err) { /* 이미 없음 */ }
+}
+
+function download_(id) {
+  const blob = ownFile_(id).getBlob();
+  return json_({ ok: true, name: blob.getName(), mime: blob.getContentType(), data: Utilities.base64Encode(blob.getBytes()) });
+}
+
+function doGet(e) {
+  if (e && e.parameter && e.parameter.file) {
+    try { return download_(e.parameter.file); } catch (err) { return json_({ ok: false, error: String(err) }); }
+  }
   return reply_(ctx_());
 }
 
 function doPost(e) {
+  const body = JSON.parse(e.postData.contents);
+  if (body.upload) {
+    try { return json_(upload_(body.upload)); } catch (err) { return json_({ ok: false, error: String(err) }); }
+  }
   const lock = LockService.getScriptLock();
   lock.waitLock(25000);
   try {
     const c = ctx_();
-    apply_(c, JSON.parse(e.postData.contents).ops || []);
+    apply_(c, body.ops || []);
     return reply_(ctx_());
   } catch (err) {
     return json_({ ok: false, error: String(err) });
@@ -210,7 +266,8 @@ function doPost(e) {
   }
 }
 
-// 처음 한 번 실행해서 권한을 허용합니다
+// 처음 한 번 실행해서 권한(시트·드라이브)을 허용합니다
 function setup() {
   readAll_(ctx_());
+  folder_();
 }
