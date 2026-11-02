@@ -55,12 +55,14 @@
     <div class="chips">
       <button class="chip active" data-act="scroll" data-target="top">전체</button>
       <button class="chip" data-act="scroll" data-target="schedules">스케줄표</button>
+      <button class="chip" data-act="scroll" data-target="files">자료</button>
       <button class="chip" data-act="scroll" data-target="categories">카테고리 현황</button>
       <button class="chip" data-act="scroll" data-target="requests">업무 요청</button>
     </div>
 
     <section class="grid-top" id="summary" data-section="summary"></section>
     <section id="schedules" data-section="schedules"></section>
+    <section id="files" data-section="files"></section>
     <section id="categories" data-section="categories"></section>
     <section id="requests" data-section="requests"></section>
 
@@ -70,6 +72,19 @@
   <datalist id="memberList"></datalist>
   <input type="file" id="importFile" accept="application/json,.json" hidden>
   <input type="file" id="xlFile" accept=".xlsx,.xls,.xlsm,.csv" hidden>
+  <input type="file" id="attachFile" accept="image/*,application/pdf" multiple hidden>
+
+  <dialog id="fileDialog" class="file-dialog">
+    <div class="file-view">
+      <div class="file-view-head">
+        <h3 id="fileTitle"></h3>
+        <button type="button" class="btn-light" data-act="file-open">새 창으로</button>
+        <button type="button" class="btn-light" data-act="file-dl-cur">다운로드</button>
+        <button type="button" class="btn-dark" data-act="file-close">닫기</button>
+      </div>
+      <div id="fileBody" class="file-view-body"></div>
+    </div>
+  </dialog>
 
   <dialog id="xlDialog" class="xl-dialog">
     <form method="dialog" class="gh-form">
