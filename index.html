@@ -69,6 +69,19 @@
 
   <datalist id="memberList"></datalist>
   <input type="file" id="importFile" accept="application/json,.json" hidden>
+  <input type="file" id="xlFile" accept=".xlsx,.xls,.xlsm,.csv" hidden>
+
+  <dialog id="xlDialog" class="xl-dialog">
+    <form method="dialog" class="gh-form">
+      <h3>엑셀 스케줄표 가져오기</h3>
+      <p class="hint">엑셀의 제목 줄과 열을 자동으로 찾아 대시보드 스케줄표 칸에 맞춥니다. 등록하면 구글 시트 ‘스케줄’ 탭에도 같은 양식으로 저장됩니다.</p>
+      <div id="xlBody"></div>
+      <div class="gh-actions">
+        <button type="button" class="btn-light" data-act="xl-close">취소</button>
+        <button type="button" class="btn-dark" data-act="xl-apply" id="xlApplyBtn">등록</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="sheetDialog">
     <form method="dialog" class="gh-form">
