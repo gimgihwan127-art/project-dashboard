@@ -360,6 +360,15 @@ dialog::backdrop { background: rgba(20,22,25,.45); backdrop-filter: blur(3px); }
 .gh-form input { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; outline: 0; background: var(--soft); }
 .gh-form input:focus { border-color: var(--green); background: #fff; }
 .hint { font-size: 12px; color: var(--muted); line-height: 1.6; }
+dialog.xl-dialog { width: min(920px, calc(100vw - 32px)); }
+.xl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.gh-form select { border: 1px solid var(--line); border-radius: 12px; padding: 9px 10px; background: var(--soft); font: inherit; font-size: 13px; color: var(--ink); min-width: 0; }
+.xl-h { font-size: 14px; margin-top: 6px; }
+.xl-h small { font-weight: 400; color: var(--muted); margin-left: 6px; }
+.xl-preview { max-height: 280px; overflow: auto; }
+.xl-preview td { font-size: 12px; white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; padding: 8px 10px; }
+.xl-preview .muted { color: var(--muted); }
+.gh-form button:disabled { opacity: .4; cursor: default; }
 .gh-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
 
 .toast {
