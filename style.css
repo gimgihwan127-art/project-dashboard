@@ -385,6 +385,31 @@ dialog::backdrop { background: rgba(20,22,25,.45); backdrop-filter: blur(3px); }
 .gh-form input { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; outline: 0; background: var(--soft); }
 .gh-form input:focus { border-color: var(--green); background: #fff; }
 .hint { font-size: 12px; color: var(--muted); line-height: 1.6; }
+/* 자료 · 첨부 */
+#files { margin-top: 28px; }
+.file-drop { border: 2px dashed transparent; transition: border-color .15s, background .15s; }
+.file-drop.over { border-color: var(--green); background: color-mix(in srgb, var(--green) 8%, #fff); }
+.drop-hint { text-align: center; color: var(--muted); font-size: 13px; padding: 14px 0 4px; }
+.file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+.file-card { border: 1px solid var(--line); border-radius: 18px; padding: 10px; display: flex; flex-direction: column; gap: 8px; background: #fff; }
+.file-card.uploading { opacity: .6; }
+.file-thumb {
+  border: 0; padding: 0; cursor: pointer; border-radius: 12px; overflow: hidden; aspect-ratio: 4 / 3;
+  background: var(--soft); display: grid; place-items: center; width: 100%;
+}
+.file-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.file-ico { font-weight: 700; font-size: 20px; color: #ef4444; letter-spacing: 1px; }
+.file-title { font-weight: 600; }
+.file-meta { font-size: 11px; color: var(--muted); line-height: 1.5; word-break: break-all; }
+.file-acts { display: flex; gap: 6px; align-items: center; }
+.file-acts .icon-del { margin-left: auto; }
+dialog.file-dialog { width: min(1100px, calc(100vw - 24px)); height: calc(100vh - 48px); max-height: none; }
+.file-view { display: flex; flex-direction: column; height: 100%; padding: 16px; gap: 12px; }
+.file-view-head { display: flex; align-items: center; gap: 8px; }
+.file-view-head h3 { flex: 1; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-view-body { flex: 1; min-height: 0; display: grid; place-items: center; background: var(--soft); border-radius: 14px; overflow: auto; }
+.file-view-body img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.file-view-body iframe { width: 100%; height: 100%; border: 0; border-radius: 14px; }
 dialog.xl-dialog { width: min(920px, calc(100vw - 32px)); }
 .xl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
 .gh-form select { border: 1px solid var(--line); border-radius: 12px; padding: 9px 10px; background: var(--soft); font: inherit; font-size: 13px; color: var(--ink); min-width: 0; }
