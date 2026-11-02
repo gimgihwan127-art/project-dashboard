@@ -265,6 +265,124 @@ function rangeLabel(rg) {
   return rg ? `${shortDate(new Date(rg.a).toISOString().slice(0, 10))} ~ ${shortDate(new Date(rg.b - DAY).toISOString().slice(0, 10))}` : '';
 }
 
+/* 스케줄표 보기 설정 (정렬·필터·접기) — 내 화면에만 적용되고 저장 순서는 바꾸지 않음 */
+const LS_VIEW = 'pb_view';
+const view = (() => {
+  try { return Object.assign({ hidden: [], tables: {} }, JSON.parse(store.get(LS_VIEW) || '{}')); } catch { return { hidden: [], tables: {} }; }
+})();
+const keepView = () => store.set(LS_VIEW, JSON.stringify(view));
+const tableView = (sid) => (view.tables[sid] ||= { sort: null, ex: {} });
+const pinned = new Set(); // 이번에 새로 추가한 업무는 필터와 상관없이 보여 줌
+
+const COLS = [
+  { k: 'task', label: '업무명', w: '20%' },
+  { k: 'cat', label: '카테고리', filter: true },
+  { k: 'owner', label: '담당자', filter: true },
+  { k: 'start', label: '시작일' },
+  { k: 'end', label: '종료일' },
+  { k: 'status', label: '상태', filter: true },
+  { k: 'progress', label: '진행률' },
+];
+const EMPTY = '(비어 있음)';
+
+// 필터 목록에 보이는 값
+function colText(p, r, k) {
+  if (k === 'cat') return p.categories.find((c) => c.id === r.cat)?.name || '미분류';
+  return String(r[k] ?? '').trim() || EMPTY;
+}
+
+// 정렬에 쓰는 값 (빈 값은 항상 맨 뒤)
+function colSortKey(p, r, k) {
+  if (k === 'progress') return Number(r.progress) || 0;
+  if (k === 'status') return STATUS.indexOf(r.status);
+  if (k === 'cat') { const i = p.categories.findIndex((c) => c.id === r.cat); return i < 0 ? null : i; }
+  return String(r[k] ?? '').trim() || null;
+}
+
+function viewRows(p, s) {
+  const v = tableView(s.id);
+  let rows = s.rows.filter((r) => pinned.has(r.id) || Object.entries(v.ex).every(([k, vals]) => !vals.includes(colText(p, r, k))));
+  if (v.sort) {
+    const { k, dir } = v.sort;
+    rows = rows.map((r, i) => ({ r, i, key: colSortKey(p, r, k) })).sort((a, b) => {
+      if (a.key === null || b.key === null) return a.key === b.key ? a.i - b.i : a.key === null ? 1 : -1;
+      const c = typeof a.key === 'number' ? a.key - b.key : a.key.localeCompare(b.key, 'ko');
+      return (c * dir) || a.i - b.i;
+    }).map((x) => x.r);
+  }
+  return rows;
+}
+
+function colHead(s, c) {
+  const v = tableView(s.id);
+  const on = v.sort?.k === c.k || v.ex[c.k]?.length;
+  const arrow = v.sort?.k === c.k ? (v.sort.dir > 0 ? '↑' : '↓') : '';
+  return `<th${c.w ? ` style="width:${c.w}"` : ''}><button class="th-btn ${on ? 'on' : ''}" data-act="col-menu" data-s="${s.id}" data-k="${c.k}" title="정렬${c.filter ? '·필터' : ''}">${c.label}${arrow ? ` <b>${arrow}</b>` : ''}${v.ex[c.k]?.length ? ' <i class="fdot"></i>' : ''}<span class="caret">▾</span></button></th>`;
+}
+
+function openColMenu(btn) {
+  const { s: sid, k } = btn.dataset;
+  const p = project();
+  const s = p.schedules.find((x) => x.id === sid);
+  const c = COLS.find((x) => x.k === k);
+  const v = tableView(sid);
+  const menu = $('#colMenu');
+  let list = '';
+  if (c.filter) {
+    const counts = new Map();
+    // 카테고리는 카테고리 순서대로, 나머지는 가나다순
+    if (k === 'cat') [...p.categories.map((x) => x.name), '미분류'].forEach((n) => counts.set(n, 0));
+    s.rows.forEach((r) => { const t = colText(p, r, k); counts.set(t, (counts.get(t) || 0) + 1); });
+    let vals = [...counts.entries()].filter(([n, cnt]) => cnt || (v.ex[k] || []).includes(n));
+    if (k !== 'cat') vals.sort((a, b) => (a[0] === EMPTY) - (b[0] === EMPTY) || a[0].localeCompare(b[0], 'ko'));
+    const ex = v.ex[k] || [];
+    list = `<div class="cm-sep"></div>
+      <label class="cm-all"><input type="checkbox" data-cm="all" ${ex.length ? '' : 'checked'}> (모두 선택)</label>
+      <div class="cm-list">${vals.map(([n, cnt]) => `<label><input type="checkbox" data-cm="val" value="${esc(n)}" ${ex.includes(n) ? '' : 'checked'}> <span>${esc(n)}</span><small>${cnt}</small></label>`).join('')}</div>
+      ${ex.length ? '<button class="cm-item" data-act="col-clear">필터 지우기</button>' : ''}`;
+  }
+  menu.innerHTML = `
+    <button class="cm-item ${v.sort?.k === k && v.sort.dir > 0 ? 'on' : ''}" data-act="col-sort" data-dir="1">↑ 오름차순 정렬</button>
+    <button class="cm-item ${v.sort?.k === k && v.sort.dir < 0 ? 'on' : ''}" data-act="col-sort" data-dir="-1">↓ 내림차순 정렬</button>
+    ${v.sort?.k === k ? '<button class="cm-item" data-act="col-sort" data-dir="0">정렬 해제 (원래 순서)</button>' : ''}
+    ${list}`;
+  menu.dataset.s = sid;
+  menu.dataset.k = k;
+  menu.hidden = false;
+  const b = btn.getBoundingClientRect();
+  menu.style.left = `${Math.max(8, Math.min(b.left, innerWidth - menu.offsetWidth - 8)) + scrollX}px`;
+  menu.style.top = `${b.bottom + 4 + scrollY}px`;
+}
+
+function closeColMenu() { $('#colMenu').hidden = true; }
+
+// 메뉴를 연 채로 표만 다시 그림
+function applyView(sid, k) {
+  keepView();
+  renderSchedules();
+  const btn = document.querySelector(`.th-btn[data-s="${sid}"][data-k="${k}"]`);
+  if (btn && !$('#colMenu').hidden) openColMenu(btn);
+}
+
+document.addEventListener('change', (e) => {
+  const el = e.target;
+  if (!el.dataset.cm) return;
+  const { s: sid, k } = $('#colMenu').dataset;
+  const v = tableView(sid);
+  if (el.dataset.cm === 'all') {
+    v.ex[k] = el.checked ? [] : [...$('#colMenu').querySelectorAll('[data-cm="val"]')].map((x) => x.value);
+  } else {
+    v.ex[k] = [...$('#colMenu').querySelectorAll('[data-cm="val"]')].filter((x) => !x.checked).map((x) => x.value);
+  }
+  if (!v.ex[k].length) delete v.ex[k];
+  applyView(sid, k);
+});
+
+document.addEventListener('pointerdown', (e) => {
+  if (!$('#colMenu').hidden && !e.target.closest('#colMenu, .th-btn')) closeColMenu();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeColMenu(); });
+
 function renderSchedules() {
   const p = project();
   $('#schedules').innerHTML = `
@@ -277,24 +395,30 @@ function renderSchedules() {
     </div>
     ${p.schedules.map((s) => {
       const rg = rangeOf(s);
-      return `<div class="card sched" data-s="${s.id}">
+      const hidden = view.hidden.includes(s.id);
+      const rows = viewRows(p, s);
+      const v = tableView(s.id);
+      const filtered = rows.length !== s.rows.length;
+      return `<div class="card sched ${hidden ? 'folded' : ''}" data-s="${s.id}">
         <div class="sec-head">
-          <div><p class="eyebrow">Schedule · ${s.rows.length}개 업무</p>
+          <div><p class="eyebrow">Schedule · ${s.rows.length}개 업무${filtered ? ` · <b class="flt">필터 적용: ${rows.length}개 표시</b>` : ''}${
+            filtered || v.sort ? ` <button class="link-btn" data-act="view-reset" data-s="${s.id}">정렬·필터 해제</button>` : ''}</p>
             <input class="sched-name" data-t="sched" data-s="${s.id}" data-k="name" value="${esc(s.name)}" placeholder="스케줄표 이름"></div>
           <div class="sched-actions">
-            <button class="btn-outline" data-act="xl-import" data-s="${s.id}" title="엑셀 파일의 업무를 이 스케줄표에 추가">엑셀 가져오기</button>
-            <button class="btn-dark" data-act="add-row" data-s="${s.id}">+ 업무 추가</button>
+            ${hidden ? '' : `<button class="btn-outline" data-act="xl-import" data-s="${s.id}" title="엑셀 파일의 업무를 이 스케줄표에 추가">엑셀 가져오기</button>
+            <button class="btn-dark" data-act="add-row" data-s="${s.id}">+ 업무 추가</button>`}
+            <button class="btn-outline fold-btn" data-act="toggle-sched" data-s="${s.id}" title="${hidden ? '표 펼치기' : '표 숨기기 (내 화면에서만)'}">${hidden ? '펼치기 ▾' : '숨기기 ▴'}</button>
             <button class="round-btn danger" data-act="delete-schedule" data-s="${s.id}" title="스케줄표 삭제">${ICON_TRASH}</button>
           </div>
         </div>
-        <div class="table-wrap"><table>
+        ${hidden ? '' : `<div class="table-wrap"><table>
           <thead><tr>
-            <th style="width:20%">업무명</th><th>카테고리</th><th>담당자</th><th>시작일</th><th>종료일</th><th>상태</th><th>진행률</th>
+            ${COLS.map((c) => colHead(s, c)).join('')}
             <th>타임라인 <span class="gantt-range">${rangeLabel(rg)}</span></th><th style="width:16%">메모</th><th>최종 수정</th><th class="del-col">삭제</th>
           </tr></thead>
-          <tbody>${s.rows.map((r) => rowHTML(p, s, r, rg)).join('')}</tbody>
+          <tbody>${rows.map((r) => rowHTML(p, s, r, rg)).join('')}</tbody>
         </table></div>
-        ${s.rows.length ? '' : '<p class="empty">아직 업무가 없습니다. “+ 업무 추가”를 눌러 시작하세요.</p>'}
+        ${s.rows.length ? (rows.length ? '' : '<p class="empty">필터 조건에 맞는 업무가 없습니다.</p>') : '<p class="empty">아직 업무가 없습니다. “+ 업무 추가”를 눌러 시작하세요.</p>'}`}
       </div>`;
     }).join('')}`;
 }
@@ -304,7 +428,7 @@ function updateScheduleInPlace(sid, rid) {
   const p = project();
   const s = p.schedules.find((x) => x.id === sid);
   const card = document.querySelector(`.sched[data-s="${sid}"]`);
-  if (!s || !card) return;
+  if (!s || !card?.querySelector('.gantt-range')) return;
   const rg = rangeOf(s);
   card.querySelector('.gantt-range').textContent = rangeLabel(rg);
   s.rows.forEach((r) => {
@@ -630,6 +754,9 @@ document.addEventListener('click', (e) => {
       const r = newRow('', p.categories[0]?.id || '', user, today(), addDays(7));
       stamp(r);
       s.rows.push(r);
+      pinned.add(r.id);
+      view.hidden = view.hidden.filter((x) => x !== s.id);
+      keepView();
       save(); renderSchedules(); renderSummary(); renderCategories();
       const input = document.querySelector(`tr[data-r="${r.id}"] [data-k="task"]`);
       input?.scrollIntoView({ block: 'center' });
@@ -711,6 +838,35 @@ document.addEventListener('click', (e) => {
     case 'import': $('#importFile').click(); break;
     case 'xl-import': xl.target = d.s || ''; $('#xlFile').click(); break;
     case 'xl-close': $('#xlDialog').close(); break;
+    case 'col-menu':
+      if (!$('#colMenu').hidden && $('#colMenu').dataset.s === d.s && $('#colMenu').dataset.k === d.k) closeColMenu();
+      else openColMenu(b);
+      break;
+    case 'col-sort': {
+      const { s: sid, k } = $('#colMenu').dataset;
+      tableView(sid).sort = +d.dir ? { k, dir: +d.dir } : null;
+      pinned.clear();
+      closeColMenu();
+      applyView(sid, k);
+      break;
+    }
+    case 'col-clear': {
+      const { s: sid, k } = $('#colMenu').dataset;
+      delete tableView(sid).ex[k];
+      applyView(sid, k);
+      break;
+    }
+    case 'view-reset':
+      delete view.tables[d.s];
+      pinned.clear();
+      closeColMenu();
+      keepView(); renderSchedules();
+      break;
+    case 'toggle-sched':
+      view.hidden = view.hidden.includes(d.s) ? view.hidden.filter((x) => x !== d.s) : [...view.hidden, d.s];
+      closeColMenu();
+      keepView(); renderSchedules();
+      break;
     case 'xl-apply': xlApply(); break;
     case 'sheet-open': openSheet(); break;
     case 'sheet-close': $('#sheetDialog').close(); break;
