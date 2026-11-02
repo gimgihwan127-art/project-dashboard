@@ -59,6 +59,7 @@ function newProject(name) {
     categories: ['교육', '영상', '디자인', '마케팅'].map((n) => ({ id: uid(), name: n, status: '', todos: [] })),
     schedules: [{ id: uid(), name: '메인 스케줄', rows: [] }],
     requests: [],
+    files: [],
   };
 }
 
@@ -97,6 +98,7 @@ function normalize(s) {
     p.schedules.forEach((sc) => (sc.rows = sc.rows || []));
     p.categories.forEach((c) => (c.todos = c.todos || []));
     p.requests = p.requests || [];
+    p.files = p.files || [];
   });
   if (!s.projects.some((p) => p.id === s.activeId)) s.activeId = s.projects[0].id;
   delete s.sheetUrl;
@@ -143,6 +145,7 @@ function renderAll() {
   renderSummary();
   renderSchedules();
   renderCategories();
+  renderFiles();
   renderRequests();
   renderMemberList();
   renderFoot();
@@ -592,6 +595,7 @@ function targetOf(el) {
     case 'cat': return p.categories.find((c) => c.id === d.c);
     case 'todo': return p.categories.find((c) => c.id === d.c)?.todos.find((o) => o.id === d.o);
     case 'req': return p.requests.find((q) => q.id === d.q);
+    case 'file': return p.files.find((f) => f.id === d.f);
     default: return null;
   }
 }
@@ -626,6 +630,7 @@ document.addEventListener('change', (e) => {
   }
   if (el.id === 'importFile') return importFile(el);
   if (el.id === 'xlFile') return xlFile(el);
+  if (el.id === 'attachFile') { const list = [...el.files]; el.value = ''; return uploadFiles(list); }
   if (el.closest('#xlDialog')) return xlChange(el);
   if (!el.dataset.t) return;
   const o = targetOf(el);
@@ -838,6 +843,19 @@ document.addEventListener('click', (e) => {
     case 'import': $('#importFile').click(); break;
     case 'xl-import': xl.target = d.s || ''; $('#xlFile').click(); break;
     case 'xl-close': $('#xlDialog').close(); break;
+    case 'file-add': $('#attachFile').click(); break;
+    case 'file-view': { const f = p.files.find((x) => x.id === d.f); if (f) viewFile(f); break; }
+    case 'file-down': { const f = p.files.find((x) => x.id === d.f); if (f) downloadFile(f); break; }
+    case 'file-open': { const f = p.files.find((x) => x.id === $('#fileDialog').dataset.f); if (f) downloadFile(f, true); break; }
+    case 'file-dl-cur': { const f = p.files.find((x) => x.id === $('#fileDialog').dataset.f); if (f) downloadFile(f); break; }
+    case 'file-close': $('#fileDialog').close(); break;
+    case 'file-del': {
+      const f = p.files.find((x) => x.id === d.f);
+      if (!f || !confirm(`'${f.title || f.name}' 파일을 삭제할까요?\n구글 드라이브에서는 휴지통으로 이동합니다.`)) return;
+      p.files = p.files.filter((x) => x.id !== d.f);
+      save(); renderFiles();
+      break;
+    }
     case 'col-menu':
       if (!$('#colMenu').hidden && $('#colMenu').dataset.s === d.s && $('#colMenu').dataset.k === d.k) closeColMenu();
       else openColMenu(b);
@@ -912,6 +930,154 @@ function importFile(input) {
   };
   reader.readAsText(file);
 }
+
+/* ---------------- 자료 · 첨부 (이미지 / PDF) ----------------
+ * 파일은 구글 드라이브 폴더에 올리고, 시트에는 제목·파일명·작은 미리보기만 저장.
+ * 볼 때는 Apps Script를 거쳐 받아 오므로 드라이브 공유 설정이 필요 없음 */
+
+const MAX_FILE = 20 * 1024 * 1024;
+const uploads = []; // 올리는 중인 파일
+const blobs = new Map(); // 드라이브ID → 받아 둔 파일 주소
+const isPdf = (f) => f.mime === 'application/pdf';
+const sizeText = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)}MB` : `${Math.max(1, Math.round(n / 1024))}KB`);
+
+function renderFiles() {
+  const p = project();
+  const card = (f) => {
+    const thumb = /^data:image\/(jpeg|png);base64,[\w+/=]+$/.test(f.thumb || '') ? `<img src="${f.thumb}" alt="">` : `<span class="file-ico">${isPdf(f) ? 'PDF' : 'IMG'}</span>`;
+    return `<article class="file-card">
+      <button class="file-thumb" data-act="file-view" data-f="${f.id}" title="크게 보기">${thumb}</button>
+      <input class="cell file-title" data-t="file" data-f="${f.id}" data-k="title" value="${esc(f.title)}" placeholder="제목">
+      <div class="file-meta">${esc(f.name)} · ${sizeText(Number(f.size) || 0)}<br>${esc(f.updatedBy) || '-'} · ${fmt(f.updatedAt)}</div>
+      <div class="file-acts">
+        <button class="btn-mini" data-act="file-view" data-f="${f.id}">보기</button>
+        <button class="btn-mini" data-act="file-down" data-f="${f.id}">다운로드</button>
+        <button class="icon-del" data-act="file-del" data-f="${f.id}" title="삭제">${ICON_DEL}</button>
+      </div>
+    </article>`;
+  };
+  const busy = uploads.map((u) => `<article class="file-card uploading"><div class="file-thumb"><span class="file-ico">…</span></div><div class="file-meta">${esc(u.name)}<br>올리는 중…</div></article>`).join('');
+  $('#files').innerHTML = `
+    <div class="section-title">
+      <div><h2>자료 · 첨부</h2><p>이미지와 PDF를 올려 팀원과 함께 봅니다. 파일은 구글 드라이브에 저장되고 여기서 바로 볼 수 있습니다.</p></div>
+      <div class="sched-actions"><button class="btn-dark" data-act="file-add">+ 파일 올리기</button></div>
+    </div>
+    <div class="card file-drop" data-drop="files">
+      ${p.files.length || uploads.length ? `<div class="file-grid">${p.files.map(card).join('')}${busy}</div>` : ''}
+      <p class="drop-hint">이미지나 PDF를 여기로 끌어다 놓거나 <b>+ 파일 올리기</b>를 누르세요 · 최대 20MB</p>
+    </div>`;
+}
+
+const readBase64 = (file) => new Promise((ok, fail) => {
+  const r = new FileReader();
+  r.onload = () => ok(String(r.result).split(',')[1]);
+  r.onerror = () => fail(new Error('파일을 읽지 못했습니다'));
+  r.readAsDataURL(file);
+});
+
+// 시트 칸(5만 자)에 들어가도록 작은 JPEG 미리보기 생성
+async function makeThumb(file) {
+  try {
+    const url = URL.createObjectURL(file);
+    const img = await new Promise((ok, fail) => { const i = new Image(); i.onload = () => ok(i); i.onerror = fail; i.src = url; });
+    URL.revokeObjectURL(url);
+    const scale = Math.min(1, 360 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(img.naturalWidth * scale));
+    c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff';
+    g.fillRect(0, 0, c.width, c.height);
+    g.drawImage(img, 0, 0, c.width, c.height);
+    for (const q of [0.75, 0.6, 0.45, 0.3]) {
+      const d = c.toDataURL('image/jpeg', q);
+      if (d.length < 40000) return d;
+    }
+  } catch { /* 브라우저가 못 여는 형식(HEIC 등) */ }
+  return '';
+}
+
+async function uploadFiles(list) {
+  const p = project();
+  for (const file of list) {
+    if (!/^image\/|^application\/pdf$/.test(file.type)) { toast(`${file.name}: 이미지나 PDF만 올릴 수 있습니다`, true); continue; }
+    if (file.size > MAX_FILE) { toast(`${file.name}: 20MB 이하만 올릴 수 있습니다`, true); continue; }
+    const tmp = { id: uid(), name: file.name };
+    uploads.push(tmp);
+    renderFiles();
+    try {
+      const [data, thumb] = await Promise.all([readBase64(file), file.type.startsWith('image/') ? makeThumb(file) : '']);
+      const res = await fetch(sheetUrl, { method: 'POST', body: JSON.stringify({ upload: { name: file.name, mime: file.type, data } }) });
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error || '알 수 없는 오류');
+      if (!j.fileId) throw new Error('구글 시트 스크립트를 새 버전으로 배포해야 합니다');
+      const f = { id: tmp.id, title: file.name.replace(/\.[^.]+$/, ''), name: file.name, mime: file.type, fileId: j.fileId, size: String(file.size), thumb };
+      stamp(f);
+      p.files.push(f);
+      save();
+      toast(`${file.name} 을(를) 올렸습니다`);
+    } catch (err) {
+      toast(`${file.name} 올리기 실패: ${err.message}`, true);
+    } finally {
+      uploads.splice(uploads.indexOf(tmp), 1);
+      renderFiles();
+    }
+  }
+}
+
+async function fileUrl(f) {
+  if (blobs.has(f.fileId)) return blobs.get(f.fileId);
+  const res = await fetch(`${sheetUrl}?file=${encodeURIComponent(f.fileId)}`);
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || '알 수 없는 오류');
+  const bytes = Uint8Array.from(atob(j.data), (c) => c.charCodeAt(0));
+  const url = URL.createObjectURL(new Blob([bytes], { type: f.mime || j.mime }));
+  blobs.set(f.fileId, url);
+  return url;
+}
+
+async function viewFile(f) {
+  const dlg = $('#fileDialog');
+  dlg.dataset.f = f.id;
+  $('#fileTitle').textContent = f.title || f.name;
+  $('#fileBody').innerHTML = '<p class="hint">불러오는 중…</p>';
+  dlg.showModal();
+  try {
+    const url = await fileUrl(f);
+    if (dlg.dataset.f !== f.id) return;
+    $('#fileBody').innerHTML = isPdf(f) ? `<iframe src="${url}" title="${esc(f.name)}"></iframe>` : `<img src="${url}" alt="${esc(f.title)}">`;
+  } catch (err) {
+    $('#fileBody').innerHTML = `<p class="hint">파일을 불러오지 못했습니다: ${esc(err.message)}</p>`;
+  }
+}
+
+async function downloadFile(f, open) {
+  try {
+    const url = await fileUrl(f);
+    if (open) return window.open(url, '_blank');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = f.name;
+    a.click();
+  } catch (err) {
+    toast(`파일을 받지 못했습니다: ${err.message}`, true);
+  }
+}
+
+document.addEventListener('dragover', (e) => {
+  const zone = e.target.closest?.('[data-drop]');
+  if (!zone) return;
+  e.preventDefault();
+  zone.classList.add('over');
+});
+document.addEventListener('dragleave', (e) => e.target.closest?.('[data-drop]')?.classList.remove('over'));
+document.addEventListener('drop', (e) => {
+  const zone = e.target.closest?.('[data-drop]');
+  if (!zone) return;
+  e.preventDefault();
+  zone.classList.remove('over');
+  uploadFiles([...e.dataTransfer.files]);
+});
 
 /* ---------------- 엑셀 스케줄표 가져오기 ----------------
  * 제목 줄과 열을 자동으로 찾아 대시보드 스케줄표 칸(업무명·카테고리·담당자·기간·상태·진행률·메모)에 맞춤.
@@ -1181,9 +1347,11 @@ const KINDS = {
   schedule: ['project', 'projectName', 'name'],
   row: ['project', 'projectName', 'schedule', 'scheduleName', 'task', 'cat', 'catName', 'owner', 'start', 'end', 'status', 'progress', 'note', 'updatedBy', 'updatedAt'],
   request: ['project', 'projectName', 'type', 'from', 'to', 'title', 'body', 'due', 'status', 'answer', 'createdAt', 'updatedBy', 'updatedAt'],
+  file: ['project', 'projectName', 'title', 'name', 'mime', 'fileId', 'size', 'updatedBy', 'updatedAt', 'thumb'],
 };
 // 부모 종류 (필드 이름도 같음)
-const PARENT = { member: 'project', category: 'project', schedule: 'project', request: 'project', todo: 'category', row: 'schedule' };
+const PARENT = { member: 'project', category: 'project', schedule: 'project', request: 'project', file: 'project', todo: 'category', row: 'schedule' };
+const FILE_FIELDS = ['title', 'name', 'mime', 'fileId', 'size', 'updatedBy', 'updatedAt', 'thumb'];
 const REQ_FIELDS = ['type', 'from', 'to', 'title', 'body', 'due', 'status', 'answer', 'createdAt', 'updatedBy', 'updatedAt'];
 const ROW_FIELDS = ['task', 'cat', 'owner', 'start', 'end', 'status', 'note', 'updatedBy', 'updatedAt'];
 
@@ -1219,13 +1387,14 @@ function flatten(s) {
       sc.rows.forEach((r) => put('row', r.id, { ...r, ...P, schedule: sc.id, scheduleName: sc.name, catName: p.categories.find((c) => c.id === r.cat)?.name || '' }));
     });
     p.requests.forEach((q) => put('request', q.id, { ...q, ...P }));
+    p.files.forEach((f) => put('file', f.id, { ...f, ...P }));
   });
   return m;
 }
 
 function build(flat) {
   const of = (kind) => [...flat.values()].filter((x) => x.kind === kind);
-  const projects = of('project').map(({ id, f }) => ({ id, name: f.name, members: [], categories: [], schedules: [], requests: [] }));
+  const projects = of('project').map(({ id, f }) => ({ id, name: f.name, members: [], categories: [], schedules: [], requests: [], files: [] }));
   const P = new Map(projects.map((p) => [p.id, p]));
   of('member').forEach(({ f }) => P.get(f.project)?.members.push(f.name));
   of('category').forEach(({ id, f }) => P.get(f.project)?.categories.push({ id, name: f.name, status: f.status, todos: [] }));
@@ -1235,6 +1404,7 @@ function build(flat) {
   const S = new Map(projects.flatMap((p) => p.schedules.map((s) => [s.id, s])));
   of('row').forEach(({ id, f }) => S.get(f.schedule)?.rows.push({ id, ...pick(f, ROW_FIELDS), progress: Number(f.progress) || 0 }));
   of('request').forEach(({ id, f }) => P.get(f.project)?.requests.push({ id, ...pick(f, REQ_FIELDS) }));
+  of('file').forEach(({ id, f }) => P.get(f.project)?.files.push({ id, ...pick(f, FILE_FIELDS) }));
   projects.forEach((p) => { if (!p.schedules.length) p.schedules.push({ id: uid(), name: '메인 스케줄', rows: [] }); });
   return { version: 3, projects, activeId: '' };
 }
