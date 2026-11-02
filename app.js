@@ -270,7 +270,10 @@ function renderSchedules() {
   $('#schedules').innerHTML = `
     <div class="section-title">
       <div><h2>스케줄표</h2><p>업무명·담당자·기간·상태를 직접 입력하세요. 모든 변경은 자동 저장됩니다.</p></div>
-      <button class="btn-dark" data-act="add-schedule">+ 스케줄표 추가</button>
+      <div class="sched-actions">
+        <button class="btn-outline" data-act="xl-import" title="엑셀 파일을 새 스케줄표로 가져오기">엑셀 가져오기</button>
+        <button class="btn-dark" data-act="add-schedule">+ 스케줄표 추가</button>
+      </div>
     </div>
     ${p.schedules.map((s) => {
       const rg = rangeOf(s);
@@ -279,6 +282,7 @@ function renderSchedules() {
           <div><p class="eyebrow">Schedule · ${s.rows.length}개 업무</p>
             <input class="sched-name" data-t="sched" data-s="${s.id}" data-k="name" value="${esc(s.name)}" placeholder="스케줄표 이름"></div>
           <div class="sched-actions">
+            <button class="btn-outline" data-act="xl-import" data-s="${s.id}" title="엑셀 파일의 업무를 이 스케줄표에 추가">엑셀 가져오기</button>
             <button class="btn-dark" data-act="add-row" data-s="${s.id}">+ 업무 추가</button>
             <button class="round-btn danger" data-act="delete-schedule" data-s="${s.id}" title="스케줄표 삭제">${ICON_TRASH}</button>
           </div>
@@ -497,6 +501,8 @@ document.addEventListener('change', (e) => {
     return;
   }
   if (el.id === 'importFile') return importFile(el);
+  if (el.id === 'xlFile') return xlFile(el);
+  if (el.closest('#xlDialog')) return xlChange(el);
   if (!el.dataset.t) return;
   const o = targetOf(el);
   if (!o) return;
@@ -703,6 +709,9 @@ document.addEventListener('click', (e) => {
     }
     case 'export': exportJSON(); break;
     case 'import': $('#importFile').click(); break;
+    case 'xl-import': xl.target = d.s || ''; $('#xlFile').click(); break;
+    case 'xl-close': $('#xlDialog').close(); break;
+    case 'xl-apply': xlApply(); break;
     case 'sheet-open': openSheet(); break;
     case 'sheet-close': $('#sheetDialog').close(); break;
     case 'sheet-save': saveSheetForm(); break;
@@ -746,6 +755,261 @@ function importFile(input) {
     }
   };
   reader.readAsText(file);
+}
+
+/* ---------------- 엑셀 스케줄표 가져오기 ----------------
+ * 제목 줄과 열을 자동으로 찾아 대시보드 스케줄표 칸(업무명·카테고리·담당자·기간·상태·진행률·메모)에 맞춤.
+ * 등록하면 일반 업무 추가와 같이 구글 시트 '스케줄' 탭에 저장됨 */
+
+const XL_FIELDS = [
+  ['task', '업무명', ['업무명', '업무', '작업명', '작업', '할일', '항목', '세부업무', '세부내용', '내용', '과제', 'task']],
+  ['cat', '카테고리', ['카테고리', '구분', '분류', '대분류', '파트', '부문', 'category']],
+  ['owner', '담당자', ['담당자', '담당', '책임자', '진행자', '작업자', 'owner', 'pic']],
+  ['start', '시작일', ['시작일', '시작', '착수일', '착수', 'start']],
+  ['end', '종료일', ['종료일', '종료', '마감일', '마감', '완료일', '완료예정일', '기한', '납기', 'end', 'due']],
+  ['period', '기간 (예: 11/1~11/5)', ['기간', '일정', '날짜', '일자', 'period', 'date']],
+  ['status', '상태', ['상태', '진행상태', '진행상황', 'status']],
+  ['progress', '진행률', ['진행률', '진척률', '진척도', '진척', '%', 'progress']],
+  ['note', '메모', ['메모', '비고', '진행사항', '참고', '코멘트', '특이사항', 'note', 'memo']],
+];
+const XLSX_SRC = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+const xl = { wb: null, name: '', sheet: '', rows: [], head: 0, map: {}, target: '' };
+const norm = (s) => String(s ?? '').replace(/\s+/g, '').toLowerCase();
+const ymd = (y, m, d) => (y && m >= 1 && m <= 12 && d >= 1 && d <= 31 ? `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}` : '');
+
+function loadXLSX() {
+  if (window.XLSX) return Promise.resolve();
+  loadXLSX.p ||= new Promise((ok, fail) => {
+    const s = document.createElement('script');
+    s.src = XLSX_SRC;
+    s.onload = ok;
+    s.onerror = () => { loadXLSX.p = null; fail(); };
+    document.head.appendChild(s);
+  });
+  return loadXLSX.p;
+}
+
+async function xlFile(input) {
+  const file = input.files[0];
+  input.value = '';
+  if (!file) return;
+  try {
+    await loadXLSX();
+  } catch {
+    return toast('엑셀 읽기 도구를 불러오지 못했습니다 (인터넷 연결 확인)', true);
+  }
+  try {
+    if (/\.csv$/i.test(file.name)) {
+      // 한글 CSV는 UTF-8 또는 EUC-KR(엑셀 기본 저장)
+      const buf = await file.arrayBuffer();
+      let text;
+      try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch { text = new TextDecoder('euc-kr').decode(buf); }
+      xl.wb = XLSX.read(text, { type: 'string', cellDates: true });
+    } else {
+      xl.wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
+    }
+  } catch (err) {
+    return toast(`엑셀 파일을 읽지 못했습니다: ${err.message}`, true);
+  }
+  xl.name = file.name.replace(/\.[^.]+$/, '');
+  xlSheet(xl.wb.SheetNames[0]);
+  $('#xlDialog').showModal();
+}
+
+function xlSheet(name) {
+  xl.sheet = name;
+  const ws = xl.wb.Sheets[name];
+  // 병합된 셀은 모든 칸에 같은 값이 있는 것으로 봄 (구분·담당자를 병합해 둔 표 대응)
+  (ws['!merges'] || []).forEach((m) => {
+    const top = ws[XLSX.utils.encode_cell(m.s)];
+    if (!top) return;
+    for (let r = m.s.r; r <= m.e.r; r++) {
+      for (let c = m.s.c; c <= m.e.c; c++) if (r !== m.s.r || c !== m.s.c) ws[XLSX.utils.encode_cell({ r, c })] = { ...top };
+    }
+  });
+  ws['!merges'] = [];
+  xl.rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true, blankrows: false });
+  // 키워드가 가장 많이 들어 있는 줄을 제목 줄로 (병합된 큰 제목은 같은 값이라 한 번만 셈)
+  let best = -1;
+  xl.head = 0;
+  xl.rows.slice(0, 20).forEach((r, i) => {
+    const score = new Set(r.map(norm).filter((v) => v.length <= 12 && XL_FIELDS.some(([, , ks]) => ks.some((k) => v.includes(k))))).size;
+    if (score > best) { best = score; xl.head = i; }
+  });
+  xlGuess();
+  xlRender();
+}
+
+// 제목 이름으로 열 짝짓기: 정확히 같은 이름 먼저, 그다음 포함하는 이름
+function xlGuess() {
+  const heads = (xl.rows[xl.head] || []).map(norm);
+  const used = new Set();
+  xl.map = {};
+  [(h, k) => h === k, (h, k) => h.includes(k)].forEach((match) => {
+    XL_FIELDS.forEach(([f, , ks]) => {
+      if (xl.map[f] !== undefined) return;
+      for (const k of ks) {
+        const i = heads.findIndex((h, j) => h && !used.has(j) && match(h, k));
+        if (i >= 0) { xl.map[f] = i; used.add(i); return; }
+      }
+    });
+  });
+  if (xl.map.start !== undefined && xl.map.end !== undefined) delete xl.map.period;
+}
+
+function xlText(v) {
+  if (v instanceof Date) return xlDate(v);
+  return String(v ?? '').trim();
+}
+
+function xlDate(v, year = new Date().getFullYear()) {
+  if (v instanceof Date && !isNaN(v)) {
+    const d = new Date(v.getTime() + 3600000); // 시간대 보정으로 자정 직전이 되는 경우 대비
+    return ymd(d.getFullYear(), d.getMonth() + 1, d.getDate());
+  }
+  if (typeof v === 'number') return v > 20000 && v < 80000 ? new Date(Math.round((v - 25569) * DAY)).toISOString().slice(0, 10) : '';
+  const s = String(v ?? '').trim();
+  let m = s.match(/(\d{4})\s*[-./년]\s*(\d{1,2})\s*[-./월]\s*(\d{1,2})/);
+  if (m) return ymd(+m[1], +m[2], +m[3]);
+  m = s.match(/(\d{2})\s*[-./]\s*(\d{1,2})\s*[-./]\s*(\d{1,2})/);
+  if (m) return ymd(2000 + +m[1], +m[2], +m[3]);
+  m = s.match(/(\d{1,2})\s*[-./월]\s*(\d{1,2})/);
+  if (m) return ymd(year, +m[1], +m[2]);
+  return '';
+}
+
+// '11/1~11/5', '11.1 ~ 5', '2026-11-01 - 2026-11-05' 같은 기간
+function xlPeriod(v, year) {
+  if (v instanceof Date || typeof v === 'number') { const d = xlDate(v, year); return [d, d]; }
+  const [a, b] = String(v ?? '').split(/\s*(?:~|∼|〜|–|—|→|부터| - )\s*/);
+  const start = xlDate(a, year);
+  if (!start) return ['', ''];
+  let end = '';
+  const dayOnly = (b || '').match(/^(\d{1,2})\s*일?$/);
+  if (dayOnly) end = `${start.slice(0, 8)}${String(+dayOnly[1]).padStart(2, '0')}`;
+  else end = xlDate(b, +start.slice(0, 4));
+  if (end && end < start && !/\d{4}/.test(b)) end = `${+end.slice(0, 4) + 1}${end.slice(4)}`; // 12/28~1/5
+  return [start, end || start];
+}
+
+function xlProgress(v) {
+  if (v === '' || v == null) return null;
+  let n = typeof v === 'number' ? v : parseFloat(String(v).replace(/[%\s]/g, ''));
+  if (isNaN(n)) return null;
+  if (typeof v === 'number' && n > 0 && n <= 1) n *= 100; // 100% 서식은 1로 읽힘
+  return Math.max(0, Math.min(100, Math.round(n / 5) * 5));
+}
+
+function xlStatus(v, prog) {
+  const s = norm(v);
+  if (/완료|끝|done|complete/.test(s)) return '완료';
+  if (/보류|중단|홀드|hold/.test(s)) return '보류';
+  if (/진행|작업중|ing|progress/.test(s)) return '진행중';
+  if (/대기|예정|미착수|미진행|todo/.test(s)) return '대기';
+  if (prog === 100) return '완료';
+  return prog > 0 ? '진행중' : '대기';
+}
+
+function xlConvert() {
+  const year = new Date().getFullYear();
+  const col = (r, f) => (xl.map[f] !== undefined ? r[xl.map[f]] : '');
+  return xl.rows.slice(xl.head + 1).map((r) => {
+    const task = xlText(col(r, 'task'));
+    if (!task) return null;
+    let start = xlDate(col(r, 'start'), year);
+    let end = xlDate(col(r, 'end'), year);
+    if (xl.map.period !== undefined && (!start || !end)) {
+      const [a, b] = xlPeriod(col(r, 'period'), year);
+      start ||= a;
+      end ||= b;
+    }
+    const prog = xlProgress(col(r, 'progress'));
+    const status = xlStatus(col(r, 'status'), prog);
+    return {
+      task, catName: xlText(col(r, 'cat')), owner: xlText(col(r, 'owner')), start, end: end || start, status,
+      progress: status === '완료' ? 100 : prog ?? (status === '진행중' ? 10 : 0), note: xlText(col(r, 'note')),
+    };
+  }).filter(Boolean);
+}
+
+function xlRender() {
+  const p = project();
+  const width = Math.max(0, ...xl.rows.slice(0, 50).map((r) => r.length));
+  const heads = xl.rows[xl.head] || [];
+  const colOpts = (f) => `<option value="">— 없음 —</option>` + Array.from({ length: width }, (_, i) =>
+    `<option value="${i}" ${xl.map[f] === i ? 'selected' : ''}>${XLSX.utils.encode_col(i)}열 · ${esc(xlText(heads[i])) || '(제목 없음)'}</option>`).join('');
+  const items = xlConvert();
+  const cats = new Set(p.categories.map((c) => norm(c.name)));
+  const newCats = [...new Set(items.map((it) => it.catName).filter((n) => n && !cats.has(norm(n))))];
+  const target = p.schedules.some((s) => s.id === xl.target) ? xl.target : '';
+  $('#xlBody').innerHTML = `
+    <div class="xl-grid">
+      ${xl.wb.SheetNames.length > 1 ? `<label>엑셀 시트<select data-xl="sheet">${xl.wb.SheetNames.map((n) => `<option ${n === xl.sheet ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>` : ''}
+      <label>제목 줄<select data-xl="head">${xl.rows.slice(0, 20).map((r, i) => `<option value="${i}" ${i === xl.head ? 'selected' : ''}>${i + 1}번째 줄 · ${esc(r.map(xlText).filter(Boolean).slice(0, 4).join(', ')).slice(0, 50)}</option>`).join('')}</select></label>
+      <label>등록할 스케줄표<select data-xl="target">
+        <option value="">새 스케줄표 만들기 (${esc(xl.name)})</option>
+        ${p.schedules.map((s) => `<option value="${s.id}" ${s.id === target ? 'selected' : ''}>${esc(s.name)}에 추가 (현재 ${s.rows.length}개)</option>`).join('')}
+      </select></label>
+    </div>
+    <h4 class="xl-h">열 맞추기 <small>자동으로 맞춘 결과입니다. 다르면 바꿔 주세요.</small></h4>
+    <div class="xl-grid">${XL_FIELDS.map(([f, label]) => `<label>${label}${f === 'task' ? ' *' : ''}<select data-xl="map" data-f="${f}">${colOpts(f)}</select></label>`).join('')}</div>
+    <h4 class="xl-h">미리보기 <small>업무 ${items.length}개${newCats.length ? ` · 새 카테고리: ${esc(newCats.join(', '))}` : ''}</small></h4>
+    <div class="table-wrap xl-preview"><table>
+      <thead><tr><th>업무명</th><th>카테고리</th><th>담당자</th><th>시작일</th><th>종료일</th><th>상태</th><th>진행률</th><th>메모</th></tr></thead>
+      <tbody>${items.slice(0, 8).map((it) => `<tr><td>${esc(it.task)}</td><td>${esc(it.catName) || '<span class="muted">미분류</span>'}</td><td>${esc(it.owner)}</td><td>${it.start || '-'}</td><td>${it.end || '-'}</td><td>${it.status}</td><td>${it.progress}%</td><td>${esc(it.note)}</td></tr>`).join('')
+        || `<tr><td colspan="8" class="muted">등록할 업무가 없습니다. 제목 줄과 업무명 열을 확인하세요.</td></tr>`}</tbody>
+    </table></div>
+    ${items.length > 8 ? `<p class="hint">외 ${items.length - 8}개</p>` : ''}`;
+  $('#xlApplyBtn').textContent = `${items.length}개 업무 등록`;
+  $('#xlApplyBtn').disabled = !items.length;
+}
+
+function xlChange(el) {
+  const k = el.dataset.xl;
+  if (k === 'sheet') return xlSheet(el.value);
+  if (k === 'head') { xl.head = +el.value; xlGuess(); }
+  if (k === 'target') xl.target = el.value;
+  if (k === 'map') {
+    const f = el.dataset.f;
+    if (el.value === '') delete xl.map[f];
+    else {
+      // 한 열은 한 칸에만
+      Object.keys(xl.map).forEach((g) => { if (xl.map[g] === +el.value) delete xl.map[g]; });
+      xl.map[f] = +el.value;
+    }
+  }
+  xlRender();
+}
+
+function xlApply() {
+  const items = xlConvert();
+  if (!items.length) return;
+  const p = project();
+  let s = p.schedules.find((x) => x.id === xl.target);
+  if (!s) {
+    s = { id: uid(), name: xl.name || `스케줄표 ${p.schedules.length + 1}`, rows: [] };
+    p.schedules.push(s);
+  }
+  items.forEach((it) => {
+    let cat = '';
+    if (it.catName) {
+      let c = p.categories.find((x) => norm(x.name) === norm(it.catName));
+      if (!c) {
+        c = { id: uid(), name: it.catName, status: '', todos: [] };
+        p.categories.push(c);
+      }
+      cat = c.id;
+    }
+    const r = newRow(it.task, cat, it.owner, it.start, it.end, it.status, it.progress);
+    r.note = it.note;
+    stamp(r);
+    s.rows.push(r);
+  });
+  save();
+  renderAll();
+  $('#xlDialog').close();
+  document.querySelector(`.sched[data-s="${s.id}"]`)?.scrollIntoView({ block: 'start' });
+  toast(`${items.length}개 업무를 '${s.name}'에 등록했습니다`);
 }
 
 /* ---------------- 구글 시트 동기화 ----------------
