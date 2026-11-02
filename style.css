@@ -228,6 +228,31 @@ th {
   text-align: left; font-weight: 500; font-size: 12px; color: var(--muted);
   padding: 8px 6px; border-bottom: 1px solid var(--line); white-space: nowrap;
 }
+.th-btn {
+  border: 0; background: transparent; font: inherit; color: inherit; cursor: pointer;
+  padding: 3px 6px; margin: -3px -6px; border-radius: 8px; display: inline-flex; align-items: center; gap: 3px;
+}
+.th-btn:hover { background: var(--soft); color: var(--ink); }
+.th-btn .caret { font-size: 10px; opacity: .55; }
+.th-btn.on { color: var(--ink); font-weight: 600; background: color-mix(in srgb, var(--green) 18%, transparent); }
+.th-btn .fdot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; }
+.col-menu {
+  position: absolute; z-index: 50; min-width: 220px; max-width: 280px; background: #fff; border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.18); padding: 6px; font-size: 13px;
+}
+.col-menu[hidden] { display: none; }
+.cm-item { display: block; width: 100%; text-align: left; border: 0; background: transparent; font: inherit; padding: 8px 10px; border-radius: 10px; cursor: pointer; color: var(--ink); }
+.cm-item:hover { background: var(--soft); }
+.cm-item.on { font-weight: 600; color: #15803d; }
+.cm-sep { height: 1px; background: var(--line); margin: 6px 4px; }
+.col-menu label { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; cursor: pointer; }
+.col-menu label:hover { background: var(--soft); }
+.col-menu label span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col-menu label small { color: var(--muted); }
+.cm-list { max-height: 240px; overflow-y: auto; }
+.link-btn { border: 0; background: transparent; color: #15803d; text-decoration: underline; cursor: pointer; font: inherit; font-size: 12px; padding: 0 4px; }
+.eyebrow .flt { color: #15803d; font-weight: 600; }
+.sched.folded .sec-head { margin-bottom: 0; }
 td { padding: 6px; border-bottom: 1px solid #f0f1f3; vertical-align: middle; }
 tr:last-child td { border-bottom: 0; }
 tbody tr:hover td { background: #fafbfb; }
