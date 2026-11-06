@@ -20,8 +20,10 @@ const $ = (s) => document.querySelector(s);
 const uid = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
 const now = () => new Date().toISOString();
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const today = () => new Date().toISOString().slice(0, 10);
-const addDays = (n) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10);
+// 내 컴퓨터 시간대 기준 날짜 (toISOString은 UTC라 한국에서는 오전 9시 전에 하루 밀림)
+const localDate = (t) => new Date(t - new Date(t).getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const today = () => localDate(Date.now());
+const addDays = (n) => localDate(Date.now() + n * DAY);
 const fmt = (iso) => {
   if (!iso) return '';
   const d = new Date(iso);
@@ -45,7 +47,7 @@ const store = {
 let state;
 let user = store.get(LS_USER) || '';
 let sheetUrl = store.get(LS_SHEET) || DEFAULT_SHEET_URL;
-const ui = { reqPerson: '' };
+const ui = { reqPerson: '', cal: {}, calOpen: new Set() };
 
 function newRow(task, cat, owner, start, end, status = '대기', progress = 0) {
   return { id: uid(), task, cat, owner, start, end, status, progress, note: '', updatedBy: '', updatedAt: now() };
@@ -143,6 +145,7 @@ function renderAll() {
   $('#meInput').value = user;
   $('#meAvatar').textContent = user ? user.trim()[0] : '?';
   renderSummary();
+  renderCalendar();
   renderSchedules();
   renderCategories();
   renderFiles();
@@ -154,6 +157,7 @@ function renderAll() {
 
 function refreshExcept(section) {
   if (section !== 'summary') renderSummary();
+  renderCalendar();
   if (section !== 'schedules') renderSchedules();
   if (section !== 'categories') renderCategories();
   if (section !== 'requests') renderRequests();
@@ -266,6 +270,123 @@ function rowHTML(p, s, r, rg) {
 
 function rangeLabel(rg) {
   return rg ? `${shortDate(new Date(rg.a).toISOString().slice(0, 10))} ~ ${shortDate(new Date(rg.b - DAY).toISOString().slice(0, 10))}` : '';
+}
+
+/* 일정 달력: 모든 스케줄표의 업무를 시작일~종료일 막대로 표시 (월별 보기는 내 화면에만 적용) */
+const CAL_LANES = 4; // 한 주에 기본으로 보이는 줄 수
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+const isoShift = (iso, n) => new Date(Date.parse(iso) + n * DAY).toISOString().slice(0, 10);
+
+// 날짜가 하나만 있으면 하루짜리로, 앞뒤가 바뀌었으면 바로잡아 표시
+function rowSpan(r) {
+  const a = ISO_DAY.test(r.start) ? r.start : '';
+  const b = ISO_DAY.test(r.end) ? r.end : '';
+  if (!a && !b) return null;
+  const s = a || b;
+  const e = b || a;
+  return s <= e ? { s, e } : { s: e, e: s };
+}
+
+// 직접 넘겨 보기 전에는 이번 달, 이번 달에 업무가 없으면 가장 가까운 업무가 있는 달
+function calMonth(p, spans) {
+  if (ui.cal[p.id]) return ui.cal[p.id];
+  const now = today();
+  const month = now.slice(0, 7);
+  if (!spans.length || spans.some(({ s, e }) => s.slice(0, 7) <= month && e.slice(0, 7) >= month)) return month;
+  const next = spans.map(({ s }) => s).filter((s) => s >= now).sort()[0];
+  return (next || spans.map(({ e }) => e).sort().pop()).slice(0, 7);
+}
+
+function shiftMonth(ym, n) {
+  const [y, m] = ym.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 7);
+}
+
+function calWeekHTML(p, ws, month, items) {
+  const days = Array.from({ length: 7 }, (_, i) => isoShift(ws, i));
+  const we = days[6];
+  const now = today();
+  // 겹치지 않게 줄 배정: 먼저 시작하고 긴 업무부터
+  const lanes = [];
+  const bars = items.filter(({ span }) => span.s <= we && span.e >= ws)
+    .sort((a, b) => a.span.s.localeCompare(b.span.s) || b.span.e.localeCompare(a.span.e))
+    .map((it) => {
+      const from = days.indexOf(it.span.s < ws ? ws : it.span.s);
+      const to = days.indexOf(it.span.e > we ? we : it.span.e);
+      let lane = lanes.findIndex((end) => end < from);
+      if (lane < 0) lane = lanes.length;
+      lanes[lane] = to;
+      return { ...it, from, to, lane };
+    });
+  const open = ui.calOpen.has(ws);
+  const shown = open ? bars : bars.filter((b) => b.lane < CAL_LANES);
+  const hidden = days.map((_, i) => bars.filter((b) => !shown.includes(b) && b.from <= i && b.to >= i).length);
+  const laneCount = shown.reduce((n, b) => Math.max(n, b.lane + 1), 0);
+  const moreRow = laneCount + 2;
+  const hasMore = hidden.some(Boolean) || open;
+
+  const cells = days.map((d, i) => `<div class="cal-day ${d.slice(0, 7) === month ? '' : 'out'} ${d === now ? 'today' : ''} ${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}" style="grid-row:1/-1;grid-column:${i + 1}"><span class="cal-num">${+d.slice(8)}</span></div>`).join('');
+  const barHTML = shown.map(({ r, sc, span, from, to, lane }) => {
+    const label = `${r.task || '(이름 없음)'}\n${r.owner || '담당 미정'} · ${span.s}${span.e !== span.s ? ` ~ ${span.e}` : ''} · ${r.status}\n${sc.name}`;
+    return `<button class="cal-bar ${r.status === '완료' ? 'done' : ''} ${span.s < ws ? 'cont-l' : ''} ${span.e > we ? 'cont-r' : ''}" style="--c:${catColor(p, r.cat)};grid-column:${from + 1}/${to + 2};grid-row:${lane + 2}" data-act="cal-row" data-s="${sc.id}" data-r="${r.id}" title="${esc(label)}"><b>${esc(r.task) || '(이름 없음)'}</b>${r.owner ? `<small>${esc(r.owner)}</small>` : ''}</button>`;
+  }).join('');
+  const more = open
+    ? `<button class="cal-more" style="grid-column:1/8;grid-row:${moreRow}" data-act="cal-week" data-w="${ws}">접기</button>`
+    : hidden.map((n, i) => (n ? `<button class="cal-more" style="grid-column:${i + 1};grid-row:${moreRow}" data-act="cal-week" data-w="${ws}">+${n}개</button>` : '')).join('');
+  return `<div class="cal-week" style="grid-template-rows:26px repeat(${laneCount},24px) ${hasMore ? '22px' : ''} minmax(10px,1fr)">${cells}${barHTML}${more}</div>`;
+}
+
+function renderCalendar() {
+  const p = project();
+  const hide = !!view.calHidden;
+  const items = p.schedules.flatMap((sc) => sc.rows.map((r) => ({ r, sc, span: rowSpan(r) })));
+  const dated = items.filter((x) => x.span);
+  const month = calMonth(p, dated.map((x) => x.span));
+  const first = `${month}-01`;
+  const last = isoShift(`${shiftMonth(month, 1)}-01`, -1);
+  const weeks = [];
+  for (let ws = isoShift(first, -new Date(first).getUTCDay()); ws <= last; ws = isoShift(ws, 7)) weeks.push(ws);
+  const inMonth = dated.filter(({ span }) => span.s <= last && span.e >= first);
+  const usedCats = p.categories.filter((c) => inMonth.some(({ r }) => r.cat === c.id));
+  const uncat = inMonth.some(({ r }) => !p.categories.some((c) => c.id === r.cat));
+  const undated = items.length - dated.length;
+  $('#calendar').innerHTML = `
+    <div class="section-title">
+      <div><h2>일정 달력</h2><p>스케줄표의 시작일·종료일이 자동으로 표시됩니다. 막대를 누르면 스케줄표의 그 업무로 이동합니다.</p></div>
+      <div class="sched-actions"><button class="btn-outline" data-act="cal-toggle">${hide ? '펼치기 ▾' : '숨기기 ▴'}</button></div>
+    </div>
+    ${hide ? '' : `<div class="card cal">
+      <div class="cal-head">
+        <div class="cal-nav">
+          <button class="round-btn" data-act="cal-move" data-n="-1" title="이전 달" aria-label="이전 달">‹</button>
+          <h3>${+month.slice(0, 4)}년 ${+month.slice(5)}월</h3>
+          <button class="round-btn" data-act="cal-move" data-n="1" title="다음 달" aria-label="다음 달">›</button>
+          <button class="btn-outline" data-act="cal-today">오늘</button>
+        </div>
+        <div class="cal-legend">
+          ${usedCats.map((c) => `<span style="--c:${catColor(p, c.id)}">${esc(c.name)}</span>`).join('')}
+          ${uncat ? '<span style="--c:#c4c9cf">미분류</span>' : ''}
+          <em>이번 달 업무 ${inMonth.length}개${undated ? ` · 날짜 없는 업무 ${undated}개` : ''}</em>
+        </div>
+      </div>
+      <div class="table-wrap"><div class="cal-grid">
+        <div class="cal-dow">${['일', '월', '화', '수', '목', '금', '토'].map((d) => `<span>${d}</span>`).join('')}</div>
+        ${weeks.map((ws) => calWeekHTML(p, ws, month, dated)).join('')}
+      </div></div>
+    </div>`}`;
+}
+
+// 달력 막대 → 스케줄표의 그 줄로 이동 (숨긴 표·필터에 가려져 있어도 보이게)
+function goToRow(sid, rid) {
+  view.hidden = view.hidden.filter((x) => x !== sid);
+  pinned.add(rid);
+  keepView();
+  renderSchedules();
+  const tr = document.querySelector(`.sched[data-s="${sid}"] tr[data-r="${rid}"]`);
+  if (!tr) return;
+  tr.scrollIntoView({ block: 'center' });
+  tr.classList.add('flash');
+  setTimeout(() => tr.classList.remove('flash'), 1800);
 }
 
 /* 스케줄표 보기 설정 (정렬·필터·접기) — 내 화면에만 적용되고 저장 순서는 바꾸지 않음 */
@@ -661,6 +782,13 @@ document.addEventListener('change', (e) => {
       const c = catColor(project(), o.cat);
       el.style.color = c === '#c4c9cf' ? 'inherit' : `color-mix(in srgb, ${c} 70%, #000)`;
     }
+    if (k === 'start' && o.start >= '2000') {
+      // 종료일이 없거나 시작일보다 빠르면 시작일로 맞춰 달력이 그 달에서 열리게 함
+      const endEl = tr.querySelector('[data-k="end"]');
+      if (!o.end || o.end < o.start) { o.end = o.start; endEl.value = o.start; }
+      // 달력에서 고른 경우에만 이동 (키보드로 입력 중이면 글자마다 change가 발생하므로 Tab으로 이동)
+      if (Date.now() - lastDateKey > 1000) setTimeout(() => focusEndDate(endEl), 60);
+    }
   }
   if (t === 'todo' && k === 'done') el.closest('li').classList.toggle('done', o.done);
 
@@ -671,6 +799,22 @@ document.addEventListener('change', (e) => {
   if (t === 'req' && ['status', 'type', 'to', 'from', 'due'].includes(k)) renderRequests();
   if (t === 'cat' && k === 'name') renderSchedules();
 });
+
+let lastDateKey = 0;
+document.addEventListener('keydown', (e) => { if (e.target.type === 'date') lastDateKey = Date.now(); }, true);
+
+function focusEndDate(el) {
+  if (!el.isConnected) return;
+  el.focus();
+  el.classList.add('date-next');
+  el.addEventListener('blur', () => el.classList.remove('date-next'), { once: true });
+  try {
+    el.showPicker();
+  } catch {
+    // 시작일을 고른 뒤 시간이 지나면 브라우저가 자동 열기를 막음 → 칸을 한 번 누르면 열리게 함
+    el.addEventListener('click', () => { try { el.showPicker(); } catch { /* 미지원 브라우저 */ } }, { once: true });
+  }
+}
 
 document.addEventListener('dblclick', (e) => {
   const tab = e.target.closest('.tab[data-id]');
@@ -762,7 +906,7 @@ document.addEventListener('click', (e) => {
       pinned.add(r.id);
       view.hidden = view.hidden.filter((x) => x !== s.id);
       keepView();
-      save(); renderSchedules(); renderSummary(); renderCategories();
+      save(); renderCalendar(); renderSchedules(); renderSummary(); renderCategories();
       const input = document.querySelector(`tr[data-r="${r.id}"] [data-k="task"]`);
       input?.scrollIntoView({ block: 'center' });
       input?.focus();
@@ -773,7 +917,7 @@ document.addEventListener('click', (e) => {
       const r = s.rows.find((x) => x.id === d.r);
       if ((r.task || r.note) && !confirm(`'${r.task || '이 업무'}'를 삭제할까요?`)) return;
       s.rows = s.rows.filter((x) => x.id !== d.r);
-      save(); renderSchedules(); renderSummary(); renderCategories();
+      save(); renderCalendar(); renderSchedules(); renderSummary(); renderCategories();
       break;
     }
     case 'add-cat':
@@ -843,6 +987,29 @@ document.addEventListener('click', (e) => {
     case 'import': $('#importFile').click(); break;
     case 'xl-import': xl.target = d.s || ''; $('#xlFile').click(); break;
     case 'xl-close': $('#xlDialog').close(); break;
+    case 'cal-move': {
+      const months = p.schedules.flatMap((sc) => sc.rows).map(rowSpan).filter(Boolean);
+      ui.cal[p.id] = shiftMonth(calMonth(p, months), +d.n);
+      ui.calOpen.clear();
+      renderCalendar();
+      break;
+    }
+    case 'cal-today':
+      ui.cal[p.id] = today().slice(0, 7);
+      ui.calOpen.clear();
+      renderCalendar();
+      break;
+    case 'cal-week':
+      if (ui.calOpen.has(d.w)) ui.calOpen.delete(d.w);
+      else ui.calOpen.add(d.w);
+      renderCalendar();
+      break;
+    case 'cal-toggle':
+      view.calHidden = !view.calHidden;
+      keepView();
+      renderCalendar();
+      break;
+    case 'cal-row': goToRow(d.s, d.r); break;
     case 'file-add': $('#attachFile').click(); break;
     case 'file-view': { const f = p.files.find((x) => x.id === d.f); if (f) viewFile(f); break; }
     case 'file-down': { const f = p.files.find((x) => x.id === d.f); if (f) downloadFile(f); break; }
