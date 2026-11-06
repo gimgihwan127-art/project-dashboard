@@ -344,7 +344,9 @@ tbody tr:hover td.del-col { background: #fafbfb; }
 .cat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .cat-card { min-width: 0; display: flex; flex-direction: column; gap: 14px; border-top: 6px solid var(--c); }
 .cat-head { display: flex; align-items: center; gap: 8px; }
-.cat-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--c); flex-shrink: 0; }
+.cat-dot { position: relative; width: 20px; height: 20px; border-radius: 50%; background: var(--c); flex-shrink: 0; cursor: pointer; box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--line); }
+.cat-dot:hover, .cat-dot:focus-within { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--c); }
+.cat-dot input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; padding: 0; border: 0; }
 .cat-name { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 17px; font-weight: 600; padding: 2px 0; border-bottom: 2px solid transparent; }
 .cat-name:focus { border-bottom-color: var(--c); }
 .cat-stats { display: flex; align-items: center; gap: 14px; background: var(--soft); border-radius: 18px; padding: 12px; }
