@@ -17,7 +17,7 @@ const BASE = [['id', 'ID'], ['project', '프로젝트ID'], ['projectName', '프�
 const TABLES = {
   project: { tab: '프로젝트', cols: [['id', 'ID'], ['name', '프로젝트']] },
   member: { tab: '팀원', cols: [...BASE, ['name', '이름']] },
-  category: { tab: '카테고리', cols: [...BASE, ['name', '카테고리'], ['status', '현황 메모']] },
+  category: { tab: '카테고리', cols: [...BASE, ['name', '카테고리'], ['status', '현황 메모'], ['color', '색상']] },
   todo: {
     tab: '할 일',
     cols: [...BASE, ['category', '카테고리ID'], ['categoryName', '카테고리'], ['text', '할 일'], ['owner', '담당'], ['done', '완료']],
@@ -266,8 +266,15 @@ function doPost(e) {
   }
 }
 
-// 처음 한 번 실행해서 권한(시트·드라이브)을 허용합니다
+// 처음 한 번 실행해서 권한(시트·드라이브)을 허용합니다. 나중에 추가된 열의 제목도 채웁니다
 function setup() {
-  readAll_(ctx_());
+  const c = ctx_();
+  Object.keys(c.kinds).forEach((kind) => {
+    if (!TABLES[kind]) return;
+    const cols = TABLES[kind].cols;
+    const sh = c.kinds[kind];
+    if (sh.getMaxColumns() < cols.length) sh.insertColumnsAfter(sh.getMaxColumns(), cols.length - sh.getMaxColumns());
+    sh.getRange(1, 1, 1, cols.length).setValues([cols.map((x) => x[1])]).setFontWeight('bold');
+  });
   folder_();
 }
