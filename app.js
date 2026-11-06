@@ -109,9 +109,16 @@ function normalize(s) {
 
 const project = () => state.projects.find((p) => p.id === state.activeId) || state.projects[0];
 const allRows = (p) => p.schedules.flatMap((s) => s.rows);
+// 어두운 색 위에는 흰 글자
+const inkOn = (hex) => {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  return r * 0.299 + g * 0.587 + b * 0.114 < 140 ? '#fff' : '#0d1a10';
+};
 const catColor = (p, catId) => {
   const i = p.categories.findIndex((c) => c.id === catId);
-  return i < 0 ? '#c4c9cf' : CAT_COLORS[i % CAT_COLORS.length];
+  if (i < 0) return '#c4c9cf';
+  // 직접 고른 색이 없으면 순서대로 기본 색 (시트에서 고친 값도 들어오므로 형식 확인)
+  return /^#[0-9a-f]{6}$/i.test(p.categories[i].color) ? p.categories[i].color : CAT_COLORS[i % CAT_COLORS.length];
 };
 const people = (p) => [...new Set([
   ...p.members,
@@ -187,7 +194,7 @@ function renderSummary() {
   const bars = p.categories.map((c, i) => {
     const cr = rows.filter((r) => r.cat === c.id);
     const v = cr.length ? Math.round(cr.reduce((a, r) => a + (Number(r.progress) || 0), 0) / cr.length) : 0;
-    return `<div class="col"><div class="b" style="--c:${CAT_COLORS[i % CAT_COLORS.length]};height:${Math.max(10, v)}%"><span>${v}%</span></div><div class="lbl">${esc(c.name)}</div></div>`;
+    return `<div class="col"><div class="b" style="--c:${catColor(p, c.id)};height:${Math.max(10, v)}%"><span style="color:${inkOn(catColor(p, c.id))}">${v}%</span></div><div class="lbl">${esc(c.name)}</div></div>`;
   }).join('');
 
   const members = people(p).map((n) => {
@@ -572,7 +579,7 @@ function renderCategories() {
     </div>
     <div class="cat-grid">
       ${p.categories.map((c, i) => {
-        const color = CAT_COLORS[i % CAT_COLORS.length];
+        const color = catColor(p, c.id);
         const cr = rows.filter((r) => r.cat === c.id);
         const avg = cr.length ? Math.round(cr.reduce((a, r) => a + (Number(r.progress) || 0), 0) / cr.length) : 0;
         const doing = cr.filter((r) => r.status === '진행중');
@@ -581,7 +588,7 @@ function renderCategories() {
         const C = (k) => `data-t="cat" data-c="${c.id}" data-k="${k}"`;
         return `<article class="card cat-card" style="--c:${color}">
           <div class="cat-head">
-            <span class="cat-dot"></span>
+            <label class="cat-dot" title="카테고리 색 바꾸기"><input type="color" list="catSwatches" ${C('color')} value="${color}" aria-label="${esc(c.name)} 색"></label>
             <input class="cat-name" ${C('name')} value="${esc(c.name)}" placeholder="카테고리 이름">
             <button class="icon-del" data-act="delete-cat" data-c="${c.id}" title="카테고리 삭제">${ICON_DEL}</button>
           </div>
@@ -737,6 +744,7 @@ document.addEventListener('input', (e) => {
   o[el.dataset.k] = valueOf(el);
   if (el.type === 'range') el.nextElementSibling.textContent = `${el.value}%`;
   if (el.dataset.t === 'proj') renderTabs();
+  if (el.type === 'color') el.closest('.cat-card').style.setProperty('--c', el.value);
   stamp(o);
   save();
 });
@@ -1509,7 +1517,7 @@ function xlApply() {
 const KINDS = {
   project: ['name'],
   member: ['project', 'projectName', 'name'],
-  category: ['project', 'projectName', 'name', 'status'],
+  category: ['project', 'projectName', 'name', 'status', 'color'],
   todo: ['project', 'projectName', 'category', 'categoryName', 'text', 'owner', 'done'],
   schedule: ['project', 'projectName', 'name'],
   row: ['project', 'projectName', 'schedule', 'scheduleName', 'task', 'cat', 'catName', 'owner', 'start', 'end', 'status', 'progress', 'note', 'updatedBy', 'updatedAt'],
@@ -1546,7 +1554,7 @@ function flatten(s) {
     put('project', p.id, { name: p.name });
     p.members.forEach((n) => put('member', `${p.id}|${n}`, { ...P, name: n }));
     p.categories.forEach((c) => {
-      put('category', c.id, { ...P, name: c.name, status: c.status });
+      put('category', c.id, { ...P, name: c.name, status: c.status, color: c.color });
       c.todos.forEach((o) => put('todo', o.id, { ...o, ...P, category: c.id, categoryName: c.name }));
     });
     p.schedules.forEach((sc) => {
@@ -1564,7 +1572,7 @@ function build(flat) {
   const projects = of('project').map(({ id, f }) => ({ id, name: f.name, members: [], categories: [], schedules: [], requests: [], files: [] }));
   const P = new Map(projects.map((p) => [p.id, p]));
   of('member').forEach(({ f }) => P.get(f.project)?.members.push(f.name));
-  of('category').forEach(({ id, f }) => P.get(f.project)?.categories.push({ id, name: f.name, status: f.status, todos: [] }));
+  of('category').forEach(({ id, f }) => P.get(f.project)?.categories.push({ id, name: f.name, status: f.status, color: f.color, todos: [] }));
   const C = new Map(projects.flatMap((p) => p.categories.map((c) => [c.id, c])));
   of('todo').forEach(({ id, f }) => C.get(f.category)?.todos.push({ id, text: f.text, owner: f.owner, done: f.done === 'TRUE' }));
   of('schedule').forEach(({ id, f }) => P.get(f.project)?.schedules.push({ id, name: f.name, rows: [] }));
