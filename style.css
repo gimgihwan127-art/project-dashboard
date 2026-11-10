@@ -452,8 +452,28 @@ dialog.file-dialog { width: min(1100px, calc(100vw - 24px)); height: calc(100vh 
 .file-view { display: flex; flex-direction: column; height: 100%; padding: 16px; gap: 12px; }
 .file-view-head { display: flex; align-items: center; gap: 8px; }
 .file-view-head h3 { flex: 1; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.file-view-body { flex: 1; min-height: 0; display: grid; place-items: center; background: var(--soft); border-radius: 14px; overflow: auto; }
-.file-view-body img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.file-count { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.file-view-stage { flex: 1; min-height: 0; position: relative; display: flex; }
+.file-nav {
+  position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 0;
+  background: rgba(255,255,255,.92); box-shadow: 0 4px 14px rgba(0,0,0,.18); font-size: 26px; line-height: 1; cursor: pointer; color: var(--ink);
+}
+.file-nav:hover { background: #fff; }
+.file-nav.prev { left: 10px; }
+.file-nav.next { right: 10px; }
+.file-nav[hidden] { display: none; }
+.file-strip { display: flex; gap: 8px; overflow-x: auto; padding: 2px; }
+.file-strip:empty { display: none; }
+.file-strip button {
+  flex: none; width: 72px; height: 54px; padding: 0; border: 2px solid transparent; border-radius: 10px; overflow: hidden;
+  background: var(--soft); cursor: pointer; display: grid; place-items: center; opacity: .65;
+}
+.file-strip button.on { border-color: var(--ink); opacity: 1; }
+.file-strip button:hover { opacity: 1; }
+.file-strip img { width: 100%; height: 100%; object-fit: cover; }
+.file-strip span { font-size: 12px; font-weight: 700; color: #ef4444; }
+.file-view-body { flex: 1; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; background: var(--soft); border-radius: 14px; overflow: hidden; }
+.file-view-body img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .file-view-body iframe { width: 100%; height: 100%; border: 0; border-radius: 14px; }
 dialog.xl-dialog { width: min(920px, calc(100vw - 32px)); }
 .xl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
