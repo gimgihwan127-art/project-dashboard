@@ -84,12 +84,18 @@
   <dialog id="fileDialog" class="file-dialog">
     <div class="file-view">
       <div class="file-view-head">
+        <span id="fileCount" class="file-count"></span>
         <h3 id="fileTitle"></h3>
         <button type="button" class="btn-light" data-act="file-open">새 창으로</button>
         <button type="button" class="btn-light" data-act="file-dl-cur">다운로드</button>
         <button type="button" class="btn-dark" data-act="file-close">닫기</button>
       </div>
-      <div id="fileBody" class="file-view-body"></div>
+      <div class="file-view-stage">
+        <div id="fileBody" class="file-view-body"></div>
+        <button type="button" id="filePrev" class="file-nav prev" data-act="file-prev" title="이전 (←)" aria-label="이전 파일">‹</button>
+        <button type="button" id="fileNext" class="file-nav next" data-act="file-next" title="다음 (→)" aria-label="다음 파일">›</button>
+      </div>
+      <div id="fileStrip" class="file-strip"></div>
     </div>
   </dialog>
 
