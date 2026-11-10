@@ -512,7 +512,13 @@ document.addEventListener('change', (e) => {
 document.addEventListener('pointerdown', (e) => {
   if (!$('#colMenu').hidden && !e.target.closest('#colMenu, .th-btn')) closeColMenu();
 });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeColMenu(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeColMenu();
+  if ($('#fileDialog').open && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+    e.preventDefault();
+    stepFile(e.key === 'ArrowLeft' ? -1 : 1);
+  }
+});
 
 function renderSchedules() {
   const p = project();
@@ -1024,6 +1030,8 @@ document.addEventListener('click', (e) => {
     case 'file-open': { const f = p.files.find((x) => x.id === $('#fileDialog').dataset.f); if (f) downloadFile(f, true); break; }
     case 'file-dl-cur': { const f = p.files.find((x) => x.id === $('#fileDialog').dataset.f); if (f) downloadFile(f); break; }
     case 'file-close': $('#fileDialog').close(); break;
+    case 'file-prev': stepFile(-1); break;
+    case 'file-next': stepFile(1); break;
     case 'file-del': {
       const f = p.files.find((x) => x.id === d.f);
       if (!f || !confirm(`'${f.title || f.name}' 파일을 삭제할까요?\n구글 드라이브에서는 휴지통으로 이동합니다.`)) return;
@@ -1173,13 +1181,17 @@ async function makeThumb(file) {
 }
 
 async function uploadFiles(list) {
-  const p = project();
-  for (const file of list) {
-    if (!/^image\/|^application\/pdf$/.test(file.type)) { toast(`${file.name}: 이미지나 PDF만 올릴 수 있습니다`, true); continue; }
-    if (file.size > MAX_FILE) { toast(`${file.name}: 20MB 이하만 올릴 수 있습니다`, true); continue; }
-    const tmp = { id: uid(), name: file.name };
-    uploads.push(tmp);
-    renderFiles();
+  // 올리는 동안 시트와 동기화되면 프로젝트 객체가 새로 만들어지므로 ID만 기억해 두고 매번 다시 찾음
+  const pid = project().id;
+  const queue = list.filter((file) => {
+    if (!/^image\/|^application\/pdf$/.test(file.type)) { toast(`${file.name}: 이미지나 PDF만 올릴 수 있습니다`, true); return false; }
+    if (file.size > MAX_FILE) { toast(`${file.name}: 20MB 이하만 올릴 수 있습니다`, true); return false; }
+    return true;
+  }).map((file) => ({ file, tmp: { id: uid(), name: file.name } }));
+  uploads.push(...queue.map((x) => x.tmp));
+  renderFiles();
+  let done = 0;
+  for (const { file, tmp } of queue) {
     try {
       const [data, thumb] = await Promise.all([readBase64(file), file.type.startsWith('image/') ? makeThumb(file) : '']);
       const res = await fetch(sheetUrl, { method: 'POST', body: JSON.stringify({ upload: { name: file.name, mime: file.type, data } }) });
@@ -1188,9 +1200,11 @@ async function uploadFiles(list) {
       if (!j.fileId) throw new Error('구글 시트 스크립트를 새 버전으로 배포해야 합니다');
       const f = { id: tmp.id, title: file.name.replace(/\.[^.]+$/, ''), name: file.name, mime: file.type, fileId: j.fileId, size: String(file.size), thumb };
       stamp(f);
+      const p = state.projects.find((x) => x.id === pid);
+      if (!p) throw new Error('프로젝트가 삭제되었습니다');
       p.files.push(f);
       save();
-      toast(`${file.name} 을(를) 올렸습니다`);
+      done++;
     } catch (err) {
       toast(`${file.name} 올리기 실패: ${err.message}`, true);
     } finally {
@@ -1198,32 +1212,68 @@ async function uploadFiles(list) {
       renderFiles();
     }
   }
+  if (done) toast(done > 1 ? `${done}개 파일을 올렸습니다` : `${queue.find(() => true).file.name} 을(를) 올렸습니다`);
 }
 
-async function fileUrl(f) {
-  if (blobs.has(f.fileId)) return blobs.get(f.fileId);
-  const res = await fetch(`${sheetUrl}?file=${encodeURIComponent(f.fileId)}`);
-  const j = await res.json();
-  if (!j.ok) throw new Error(j.error || '알 수 없는 오류');
-  const bytes = Uint8Array.from(atob(j.data), (c) => c.charCodeAt(0));
-  const url = URL.createObjectURL(new Blob([bytes], { type: f.mime || j.mime }));
-  blobs.set(f.fileId, url);
-  return url;
+// 같은 파일은 한 번만 받음 (받는 중인 것도 함께 기다림)
+function fileUrl(f) {
+  if (!blobs.has(f.fileId)) {
+    const job = (async () => {
+      const res = await fetch(`${sheetUrl}?file=${encodeURIComponent(f.fileId)}`);
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error || '알 수 없는 오류');
+      const blob = new Blob([Uint8Array.from(atob(j.data), (c) => c.charCodeAt(0))], { type: f.mime || j.mime });
+      return { url: URL.createObjectURL(blob), blob };
+    })();
+    blobs.set(f.fileId, job);
+    job.catch(() => blobs.delete(f.fileId));
+  }
+  return blobs.get(f.fileId).then((x) => x.url);
 }
 
+// 크게 보기: 같은 프로젝트의 파일을 ‹ › 또는 아래 목록으로 넘겨 봄
 async function viewFile(f) {
   const dlg = $('#fileDialog');
+  const list = project().files;
+  const i = Math.max(0, list.findIndex((x) => x.id === f.id));
   dlg.dataset.f = f.id;
   $('#fileTitle').textContent = f.title || f.name;
+  $('#fileCount').textContent = list.length > 1 ? `${i + 1} / ${list.length}` : '';
+  $('#filePrev').hidden = $('#fileNext').hidden = list.length < 2;
+  $('#fileStrip').innerHTML = list.length > 1 ? list.map((x) => `<button class="${x.id === f.id ? 'on' : ''}" data-act="file-view" data-f="${x.id}" title="${esc(x.title || x.name)}">${
+    /^data:image\/(jpeg|png);base64,[\w+/=]+$/.test(x.thumb || '') ? `<img src="${x.thumb}" alt="">` : `<span>${isPdf(x) ? 'PDF' : 'IMG'}</span>`}</button>`).join('') : '';
+  $('#fileStrip').querySelector('.on')?.scrollIntoView({ block: 'nearest', inline: 'center' });
   $('#fileBody').innerHTML = '<p class="hint">불러오는 중…</p>';
-  dlg.showModal();
+  if (!dlg.open) dlg.showModal();
   try {
     const url = await fileUrl(f);
     if (dlg.dataset.f !== f.id) return;
     $('#fileBody').innerHTML = isPdf(f) ? `<iframe src="${url}" title="${esc(f.name)}"></iframe>` : `<img src="${url}" alt="${esc(f.title)}">`;
+    if (!isPdf(f) && !f.thumb) fillThumb(f);
   } catch (err) {
-    $('#fileBody').innerHTML = `<p class="hint">파일을 불러오지 못했습니다: ${esc(err.message)}</p>`;
+    if (dlg.dataset.f === f.id) $('#fileBody').innerHTML = `<p class="hint">파일을 불러오지 못했습니다: ${esc(err.message)}</p>`;
   }
+  // 앞뒤 이미지는 미리 받아 둠
+  [list[i - 1], list[i + 1]].filter((x) => x && !isPdf(x)).forEach((x) => fileUrl(x).catch(() => {}));
+}
+
+function stepFile(n) {
+  const list = project().files;
+  if (list.length < 2 || !$('#fileDialog').open) return;
+  const i = list.findIndex((x) => x.id === $('#fileDialog').dataset.f);
+  viewFile(list[(i + n + list.length) % list.length]);
+}
+
+// 미리보기가 없는 이미지(드라이브에서 직접 넣었거나 예전 버전)는 처음 볼 때 만들어 저장
+async function fillThumb(f) {
+  const thumb = await makeThumb((await blobs.get(f.fileId)).blob);
+  const cur = state.projects.flatMap((p) => p.files).find((x) => x.id === f.id);
+  if (!thumb || !cur || cur.thumb) return;
+  cur.thumb = thumb;
+  save();
+  renderFiles();
+  const b = document.querySelector(`#fileStrip [data-f="${f.id}"]`);
+  if (b) b.innerHTML = `<img src="${thumb}" alt="">`;
 }
 
 async function downloadFile(f, open) {
