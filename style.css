@@ -214,6 +214,23 @@ h1, h2, h3, h4, p { margin: 0; }
 .add-inline input:focus { border-color: var(--green); background: #fff; }
 .pill-dark { background: var(--ink); color: #fff; border-radius: 999px; padding: 6px 14px; font-size: 12px; }
 
+/* ---------- 공지사항 · 행사 개요 ---------- */
+.info { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+.info .card { padding: 16px 20px; }
+.info-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.info-head h3 { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.info-meta { font-size: 11px; color: var(--muted); }
+.info-text {
+  width: 100%; border: 0; outline: 0; resize: none; background: transparent; font: inherit; font-size: 14px; line-height: 1.65;
+  color: var(--ink); padding: 4px 0; overflow: hidden; border-bottom: 2px solid transparent;
+}
+.info-text:focus { border-bottom-color: var(--green); }
+.info-text::placeholder { color: #a3a8ae; }
+.notice { background: #fff8e1; border: 1px solid #fde68a; }
+.notice .info-text { font-weight: 500; }
+.notice.empty { background: #fff; border-color: var(--line); }
+.notice-ico { font-size: 15px; }
+
 /* ---------- calendar ---------- */
 .cal-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .cal-nav { display: flex; align-items: center; gap: 8px; }
