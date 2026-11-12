@@ -15,7 +15,10 @@ const META_KEY = 'projectId'; // 업무 요청 탭이 어느 프로젝트인지
 const KIND_KEY = 'kind'; // 나머지 탭이 어떤 데이터인지
 const BASE = [['id', 'ID'], ['project', '프로젝트ID'], ['projectName', '프로젝트']];
 const TABLES = {
-  project: { tab: '프로젝트', cols: [['id', 'ID'], ['name', '프로젝트']] },
+  project: {
+    tab: '프로젝트',
+    cols: [['id', 'ID'], ['name', '프로젝트'], ['notice', '공지사항'], ['about', '행사 개요'], ['infoBy', '공지 수정자'], ['infoAt', '공지 수정일시']],
+  },
   member: { tab: '팀원', cols: [...BASE, ['name', '이름']] },
   category: { tab: '카테고리', cols: [...BASE, ['name', '카테고리'], ['status', '현황 메모'], ['color', '색상']] },
   todo: {
