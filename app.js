@@ -149,6 +149,7 @@ const ICON_TRASH = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" 
 function renderAll() {
   renderTabs();
   $('#projTitle').value = project().name;
+  renderInfo();
   $('#meInput').value = user;
   $('#meAvatar').textContent = user ? user.trim()[0] : '?';
   renderSummary();
@@ -169,6 +170,28 @@ function refreshExcept(section) {
   if (section !== 'categories') renderCategories();
   if (section !== 'requests') renderRequests();
   renderMemberList();
+}
+
+// 공지사항 · 행사 개요 (프로젝트마다 하나씩, 시트 '프로젝트' 탭에 저장)
+function renderInfo() {
+  const p = project();
+  const meta = p.infoAt ? `${esc(p.infoBy) || '-'} · ${fmt(p.infoAt)} 수정` : '';
+  $('#info').innerHTML = `
+    <div class="card notice ${p.notice?.trim() ? '' : 'empty'}">
+      <div class="info-head"><h3><span class="notice-ico" aria-hidden="true">📢</span>공지사항</h3><small class="info-meta">${meta}</small></div>
+      <textarea class="info-text" data-t="proj" data-k="notice" rows="1" placeholder="팀원 모두가 봐야 할 공지를 적어 주세요 (예: 11/20 리허설 14시 집합)">${esc(p.notice)}</textarea>
+    </div>
+    <div class="card about">
+      <div class="info-head"><h3>행사 개요</h3></div>
+      <textarea class="info-text" data-t="proj" data-k="about" rows="3" placeholder="어떤 행사인지 적어 주세요 · 행사명, 일시, 장소, 대상·규모, 목적, 주요 프로그램 등">${esc(p.about)}</textarea>
+    </div>`;
+  $('#info').querySelectorAll('textarea').forEach(fitText);
+}
+
+// 내용 길이에 맞춰 높이 조절
+function fitText(el) {
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight + 2}px`;
 }
 
 function renderTabs() {
@@ -750,6 +773,14 @@ document.addEventListener('input', (e) => {
   o[el.dataset.k] = valueOf(el);
   if (el.type === 'range') el.nextElementSibling.textContent = `${el.value}%`;
   if (el.dataset.t === 'proj') renderTabs();
+  if (el.classList.contains('info-text')) {
+    o.infoBy = user || '익명';
+    o.infoAt = now();
+    fitText(el);
+    el.closest('.card').classList.toggle('empty', !el.value.trim());
+    const m = $('#info .info-meta');
+    if (m) m.textContent = `${o.infoBy} · ${fmt(o.infoAt)} 수정`;
+  }
   if (el.type === 'color') el.closest('.cat-card').style.setProperty('--c', el.value);
   stamp(o);
   save();
@@ -1565,7 +1596,7 @@ function xlApply() {
  * 여러 명이 동시에 고쳐도 서로 덮어쓰지 않고, 시트에서 직접 고친 내용도 반영됨 */
 
 const KINDS = {
-  project: ['name'],
+  project: ['name', 'notice', 'about', 'infoBy', 'infoAt'],
   member: ['project', 'projectName', 'name'],
   category: ['project', 'projectName', 'name', 'status', 'color'],
   todo: ['project', 'projectName', 'category', 'categoryName', 'text', 'owner', 'done'],
@@ -1601,7 +1632,7 @@ function flatten(s) {
   const put = (kind, id, o) => m.set(keyOf(kind, id), { kind, id, f: canon(kind, o) });
   (s?.projects || []).forEach((p) => {
     const P = { project: p.id, projectName: p.name };
-    put('project', p.id, { name: p.name });
+    put('project', p.id, p);
     p.members.forEach((n) => put('member', `${p.id}|${n}`, { ...P, name: n }));
     p.categories.forEach((c) => {
       put('category', c.id, { ...P, name: c.name, status: c.status, color: c.color });
@@ -1619,7 +1650,7 @@ function flatten(s) {
 
 function build(flat) {
   const of = (kind) => [...flat.values()].filter((x) => x.kind === kind);
-  const projects = of('project').map(({ id, f }) => ({ id, name: f.name, members: [], categories: [], schedules: [], requests: [], files: [] }));
+  const projects = of('project').map(({ id, f }) => ({ id, ...pick(f, ['name', 'notice', 'about', 'infoBy', 'infoAt']), members: [], categories: [], schedules: [], requests: [], files: [] }));
   const P = new Map(projects.map((p) => [p.id, p]));
   of('member').forEach(({ f }) => P.get(f.project)?.members.push(f.name));
   of('category').forEach(({ id, f }) => P.get(f.project)?.categories.push({ id, name: f.name, status: f.status, color: f.color, todos: [] }));
