@@ -1679,7 +1679,8 @@ function diff(base, cur) {
     const b = base.get(key);
     if (!b) return ops.push({ op: 'create', kind: r.kind, item: { id: r.id, ...r.f } });
     const fields = {};
-    Object.keys(r.f).forEach((k) => { if (r.f[k] !== b.f[k]) fields[k] = r.f[k]; });
+    // 예전 버전이 저장한 기록에 없는 칸은 빈 값으로 봄 (없는 칸을 '지운 것'으로 보내 덮어쓰지 않도록)
+    Object.keys(r.f).forEach((k) => { if (r.f[k] !== (b.f[k] ?? '')) fields[k] = r.f[k]; });
     if (Object.keys(fields).length) ops.push({ op: 'patch', kind: r.kind, id: r.id, fields });
   });
   base.forEach((b, key) => { if (!cur.has(key) && !orphan(b, base)) ops.push({ op: 'delete', kind: b.kind, id: b.id }); });
@@ -1849,7 +1850,8 @@ async function init() {
     const b = JSON.parse(store.get(LS_BASE) || 'null');
     if (s && Array.isArray(b)) {
       state = s;
-      sync.base = new Map(b.map((r) => [keyOf(r.kind, r.id), r]));
+      // 새로 생긴 칸도 채워 둠 (예전 버전이 저장한 기록 대비)
+      sync.base = new Map(b.filter((r) => KINDS[r.kind]).map((r) => [keyOf(r.kind, r.id), { ...r, f: canon(r.kind, r.f) }]));
       sync.trust = true;
     }
   } catch { state = null; }
