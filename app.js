@@ -194,6 +194,9 @@ function fitText(el) {
   el.style.height = `${el.scrollHeight + 2}px`;
 }
 
+// 창 너비가 바뀌면 줄바꿈이 달라지므로 높이를 다시 맞춤
+window.addEventListener('resize', () => document.querySelectorAll('#info textarea').forEach(fitText));
+
 function renderTabs() {
   const cur = project();
   $('#tabs').innerHTML =
