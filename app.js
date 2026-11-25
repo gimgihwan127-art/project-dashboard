@@ -199,10 +199,75 @@ window.addEventListener('resize', () => document.querySelectorAll('#info textare
 
 function renderTabs() {
   const cur = project();
-  $('#tabs').innerHTML =
-    state.projects.map((p) => `<button class="tab ${p.id === cur.id ? 'active' : ''}" data-act="select-project" data-id="${p.id}" title="더블클릭하여 이름 변경">${esc(p.name) || '이름 없음'}</button>`).join('') +
-    '<button class="tab add" data-act="add-project" title="프로젝트 추가">+</button>';
+  const box = $('#tabs');
+  const left = box.scrollLeft;
+  box.innerHTML = state.projects.map((p) => `<button class="tab ${p.id === cur.id ? 'active' : ''}" data-act="select-project" data-id="${p.id}" title="더블클릭하여 이름 변경">${esc(p.name) || '이름 없음'}</button>`).join('');
+  box.scrollLeft = left;
+  // 프로젝트를 바꿨을 때만 그 탭으로 이동 (자동 갱신 때는 넘겨 보던 위치 유지)
+  if (ui.tabShown !== cur.id) {
+    ui.tabShown = cur.id;
+    showActiveTab();
+  }
+  updateTabNav();
 }
+
+// 현재 프로젝트 탭이 가려져 있으면 보이는 곳까지만 이동
+function showActiveTab() {
+  const box = $('#tabs');
+  const tab = box.querySelector('.tab.active');
+  if (!tab) return;
+  clearInterval(tabTimer);
+  ui.tabGoal = null;
+  updateTabNav(); // 화살표가 나타나면 탭 영역이 좁아지므로 먼저 반영
+  const b = box.getBoundingClientRect();
+  const t = tab.getBoundingClientRect();
+  if (t.left < b.left) box.scrollLeft -= b.left - t.left + 24;
+  // 좁은 화면에서도 탭 앞부분이 잘리지 않는 만큼만
+  else if (t.right > b.right) box.scrollLeft += Math.min(t.right - b.right + 24, t.left - b.left);
+  updateTabEnds();
+}
+
+// 화살표로 넘기기: 움직이는 도중 화면이 갱신되거나 연달아 눌러도 목표 위치까지 감
+let tabTimer = null;
+function moveTabs(n) {
+  const box = $('#tabs');
+  const max = box.scrollWidth - box.clientWidth;
+  const step = Math.max(120, box.clientWidth * 0.7);
+  ui.tabGoal = Math.max(0, Math.min(max, (ui.tabGoal ?? box.scrollLeft) + n * step));
+  // 브라우저의 smooth 스크롤은 화면 갱신과 겹치면 위치가 어긋나서 직접 움직임
+  const from = box.scrollLeft;
+  const t0 = performance.now();
+  clearInterval(tabTimer);
+  tabTimer = setInterval(() => {
+    const t = Math.min(1, (performance.now() - t0) / 260);
+    box.scrollLeft = from + (ui.tabGoal - from) * (1 - (1 - t) ** 3);
+    if (t < 1) return;
+    clearInterval(tabTimer);
+    ui.tabGoal = null;
+    updateTabEnds();
+  }, 16);
+}
+
+// 탭이 넘칠 때만 화살표를 보여 주고, 끝에 닿으면 비활성화
+function updateTabNav() {
+  const box = $('#tabs');
+  const prev = $('#tabsPrev');
+  const next = $('#tabsNext');
+  if (!prev) return; // 브라우저에 예전 index.html이 남아 있을 때
+  const left = box.scrollLeft;
+  prev.hidden = next.hidden = true;
+  prev.hidden = next.hidden = box.scrollWidth <= box.clientWidth + 1;
+  box.scrollLeft = left;
+  updateTabEnds();
+}
+function updateTabEnds() {
+  const box = $('#tabs');
+  if (!$('#tabsPrev')) return;
+  $('#tabsPrev').disabled = box.scrollLeft <= 1;
+  $('#tabsNext').disabled = box.scrollLeft + box.clientWidth >= box.scrollWidth - 1;
+}
+$('#tabs').addEventListener('scroll', updateTabEnds);
+window.addEventListener('resize', () => { if (state) updateTabNav(); });
 
 function renderMemberList() {
   $('#memberList').innerHTML = people(project()).map((n) => `<option value="${esc(n)}">`).join('');
@@ -915,6 +980,9 @@ document.addEventListener('click', (e) => {
       ui.reqPerson = '';
       store.set(LS_ACTIVE, d.id);
       renderAll();
+      break;
+    case 'tabs-move':
+      moveTabs(+d.n);
       break;
     case 'add-project': {
       const name = prompt('새 프로젝트 이름', `프로젝트 ${state.projects.length + 1}`);
